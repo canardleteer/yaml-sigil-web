@@ -37,7 +37,7 @@ Open [http://127.0.0.1:8080/](http://127.0.0.1:8080/) or `http://<host-lan-ip>:8
 
 ## Docker
 
-The image is official **stable Rust on Debian Bookworm** (`rust:bookworm`). Override the base with `RUST_IMAGE`. The container listens on **8393** by default; set `PORT` to change both the listen port and the published host port.
+The image is official **Rust 1.x on Debian Trixie** (`rust:1-trixie`), so a fresh pull tracks current stable. Override the base with `RUST_IMAGE`. The container listens on **8393** by default; set `PORT` to change both the listen port and the published host port.
 
 ```bash
 docker compose up --build
@@ -46,7 +46,7 @@ docker compose up --build
 PORT=9000 docker compose up --build
 # http://127.0.0.1:9000/
 
-RUST_IMAGE=rust:1.98-bookworm docker compose build
+RUST_IMAGE=rust:1.98-trixie docker compose build
 ```
 
 The Dockerfile has a `build` stage (`trunk build --release`) and a `runtime` stage that serves with Trunk.

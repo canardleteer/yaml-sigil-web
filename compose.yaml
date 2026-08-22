@@ -5,7 +5,7 @@ services:
     build:
       context: .
       args:
-        RUST_IMAGE: ${RUST_IMAGE:-rust:bookworm}
+        RUST_IMAGE: ${RUST_IMAGE:-rust:1-trixie}
         TRUNK_VERSION: ${TRUNK_VERSION:-0.21.14}
         PORT: ${PORT:-8393}
     image: yaml-sigil-web:local

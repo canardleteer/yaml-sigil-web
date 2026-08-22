@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# Official stable Rust on Debian Bookworm. Override with e.g.
-#   --build-arg RUST_IMAGE=rust:1.98-bookworm
-ARG RUST_IMAGE=rust:bookworm
+# Official Rust 1.x on Debian Trixie (tracks current stable). Override with e.g.
+#   --build-arg RUST_IMAGE=rust:1.98-trixie
+ARG RUST_IMAGE=rust:1-trixie
 
 FROM ${RUST_IMAGE} AS build
 ARG TRUNK_VERSION=0.21.14
