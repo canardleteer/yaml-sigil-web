@@ -1,5 +1,11 @@
 # YAML Sigil web playground
 
+## See it live
+
+> **[Live demo - canardleteer.github.io/yaml-sigil-web](https://canardleteer.github.io/yaml-sigil-web/)**
+
+## About
+
 In-browser YamlSigil v1alpha1 demo: **Sign**, **Verify**, **Compose**, **Decompose**, plus YAML parse checks.
 
 It depends on [`canardleteer/yaml-sigil-rs` `feat/wasm`](https://github.com/canardleteer/yaml-sigil-rs/tree/feat/wasm). Keys are minted in the page session and are not stored.
