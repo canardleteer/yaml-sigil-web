@@ -80,6 +80,6 @@ Algorithms:
 - `ED25519_PUREEDDSA_RAW_RS64_CANONICAL` — 32-byte seed / 32-byte public key
 - `ECDSA_SECP256R1_SHA256_RAW_RS64` — 32-byte scalar / SEC1 public point (compressed or uncompressed)
 
-Keys may be hex (`0x` optional) or base64. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64; Compose and Decompose show them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields.
+Keys may be hex (`0x` optional) or base64. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
 
 Protobuf wire encoding uses [buffa](https://crates.io/crates/buffa) inside `yaml-sigil-core` (pure Rust, including `wasm32-unknown-unknown`).

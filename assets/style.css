@@ -731,12 +731,6 @@ button.ghost:active {
   display: none;
 }
 
-.proto-mode #decompose-artifact {
-  flex: 0 0 auto;
-  min-height: 4.8rem;
-  height: 4.8rem;
-}
-
 .proto-type {
   margin: 0.15rem 0 0;
   color: var(--foxfire);

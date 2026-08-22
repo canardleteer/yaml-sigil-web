@@ -655,19 +655,12 @@ fn refresh_decompose_proto(document: &Document, form: &str, artifact: &str, carr
         return;
     }
     if artifact.trim().is_empty() {
-        fill_artifact_view(document, "decompose-artifact", None);
         fill_signature_fields(document, "decompose-carrier", None, false);
         return;
     }
     match proto::parse_artifact_text(artifact) {
-        Ok(fields) => {
-            fill_artifact_view(document, "decompose-artifact", Some(&fields));
-            set_box_state(document, "decompose-artifact-box", "ok");
-        }
-        Err(_) => {
-            fill_artifact_view(document, "decompose-artifact", None);
-            set_box_state(document, "decompose-artifact-box", "err");
-        }
+        Ok(_) => set_box_state(document, "decompose-artifact-box", "ok"),
+        Err(_) => set_box_state(document, "decompose-artifact-box", "err"),
     }
     if carrier.trim().is_empty() {
         fill_signature_fields(document, "decompose-carrier", None, false);
