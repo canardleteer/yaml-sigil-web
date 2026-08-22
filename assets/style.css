@@ -883,6 +883,15 @@ code {
     font-size: 16px;
   }
 
+  /* Signed YAML is payload plus a carrier; give it extra fold vs the unsigned pane. */
+  #sign-artifact,
+  #verify-artifact,
+  #compose-artifact,
+  #decompose-artifact {
+    min-height: 20rem;
+    height: 20rem;
+  }
+
   input,
   select,
   button {
