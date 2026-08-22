@@ -14,3 +14,4 @@ services:
     environment:
       PORT: ${PORT:-8393}
     init: true
+    restart: unless-stopped
