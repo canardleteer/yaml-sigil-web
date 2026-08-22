@@ -812,7 +812,7 @@ footer {
   margin-top: 2rem;
   color: var(--steel);
   font-size: 0.8rem;
-  max-width: 70rem;
+  text-align: center;
 }
 
 a {
