@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>YAML Sigil · trapline</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Stencil:wght@700&family=Share+Tech+Mono&display=swap"
+      rel="stylesheet"
+    />
+    <link data-trunk rel="css" href="assets/style.css" />
+    <link data-trunk rel="rust" href="Cargo.toml" data-wasm-opt="z" data-type="main" />
+  </head>
+  <body>
+    <div class="scanlines" aria-hidden="true"></div>
+    <div class="ridgeline" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" preserveAspectRatio="none">
+        <path fill="#221c16" d="M0 280 L0 176 L90 164 L170 186 L260 150 L380 172 L500 138 L620 166 L740 130 L860 158 L980 136 L1100 156 L1200 144 L1200 280 Z" />
+        <path fill="none" stroke="#3dff8a" stroke-width="1.1" opacity="0.2" d="M0 176 L90 164 L170 186 L260 150 L380 172 L500 138 L620 166 L740 130 L860 158 L980 136 L1100 156 L1200 144" />
+        <path fill="#3a2716" d="M-40 280 L20 206 L110 226 L200 78 L330 220 L420 184 L530 280 Z" />
+        <path fill="#533820" d="M200 78 L330 220 L110 226 Z" />
+        <path fill="#e8eee6" d="M156 122 L200 78 L240 126 Z" />
+        <path fill="#f7faf6" d="M182 102 L200 78 L220 104 Z" />
+        <path fill="#2c1e12" d="M50 280 L120 230 L210 248 L280 196 L370 252 L460 228 L550 280 Z" />
+        <path fill="#40301a" d="M330 280 L420 196 L515 224 L630 38 L770 214 L860 174 L990 280 Z" />
+        <path fill="#5c4024" d="M630 38 L770 214 L515 224 Z" />
+        <path fill="#e8eee6" d="M576 92 L630 38 L682 98 Z" />
+        <path fill="#f7faf6" d="M606 72 L630 38 L656 74 Z" />
+        <path fill="#372616" d="M730 280 L820 194 L915 216 L1030 54 L1145 206 L1250 170 L1320 280 Z" />
+        <path fill="#4e3620" d="M1030 54 L1145 206 L915 216 Z" />
+        <path fill="#e8eee6" d="M982 104 L1030 54 L1076 108 Z" />
+        <path fill="#f7faf6" d="M1010 82 L1030 54 L1052 84 Z" />
+        <path fill="#281c12" d="M870 280 L950 228 L1030 246 L1100 204 L1170 244 L1250 224 L1320 280 Z" />
+        <path fill="#14351a" d="M0 280 L0 236 L48 224 L96 244 L150 218 L220 240 L290 214 L365 242 L440 216 L520 246 L600 220 L680 238 L760 210 L840 236 L920 218 L1000 242 L1080 220 L1150 236 L1200 226 L1200 280 Z" />
+        <g fill="#1a4e24">
+          <path d="M42 248 L62 248 L52 220 Z" />
+          <path d="M46 234 L58 234 L52 208 Z" />
+          <path d="M118 250 L142 250 L130 214 Z" />
+          <path d="M123 232 L137 232 L130 200 Z" />
+          <path d="M248 246 L268 246 L258 218 Z" />
+          <path d="M252 232 L264 232 L258 206 Z" />
+          <path d="M402 250 L428 250 L415 212 Z" />
+          <path d="M408 230 L422 230 L415 196 Z" />
+          <path d="M548 248 L568 248 L558 220 Z" />
+          <path d="M552 234 L564 234 L558 208 Z" />
+          <path d="M722 250 L746 250 L734 214 Z" />
+          <path d="M727 232 L741 232 L734 200 Z" />
+          <path d="M888 248 L908 248 L898 220 Z" />
+          <path d="M892 234 L904 234 L898 206 Z" />
+          <path d="M1048 250 L1074 250 L1061 212 Z" />
+          <path d="M1054 230 L1068 230 L1061 196 Z" />
+        </g>
+        <g fill="#247a32">
+          <path d="M68 250 L86 250 L77 224 Z" />
+          <path d="M71 236 L83 236 L77 210 Z" />
+          <path d="M168 248 L190 248 L179 216 Z" />
+          <path d="M172 230 L186 230 L179 200 Z" />
+          <path d="M448 252 L466 252 L457 226 Z" />
+          <path d="M451 238 L463 238 L457 212 Z" />
+          <path d="M780 248 L802 248 L791 216 Z" />
+          <path d="M784 230 L798 230 L791 200 Z" />
+          <path d="M940 250 L958 250 L949 224 Z" />
+          <path d="M943 236 L955 236 L949 210 Z" />
+          <path d="M1122 248 L1146 248 L1134 212 Z" />
+          <path d="M1127 230 L1141 230 L1134 198 Z" />
+        </g>
+        <path fill="#0c0a08" d="M0 280 L0 258 L100 250 L240 264 L400 252 L580 266 L760 248 L940 262 L1100 250 L1200 258 L1200 280 Z" />
+      </svg>
+    </div>
+
+    <main id="deck" class="deck">
+      <header class="masthead">
+        <p class="kicker">yaml-sigil v1alpha1 // wasm trapline</p>
+        <h1>YAML SIGIL</h1>
+        <p class="lede">
+          Pick a window. Sign, verify, compose, decompose, or parse YAML.
+          Keys are minted in this tab and die on reload.
+        </p>
+      </header>
+
+      <nav class="op-grid" aria-label="Operations">
+        <button type="button" class="op-card op-validate" data-open-window="validate">
+          <span class="op-code">01</span>
+          <span class="op-name">Validate</span>
+          <span class="op-blurb">Parse YAML. Well-formed or not.</span>
+        </button>
+        <button type="button" class="op-card op-sign" data-open-window="sign">
+          <span class="op-code">02</span>
+          <span class="op-name">Sign</span>
+          <span class="op-blurb">Mint a pair. Mark a payload.</span>
+        </button>
+        <button type="button" class="op-card op-verify" data-open-window="verify">
+          <span class="op-code">03</span>
+          <span class="op-name">Verify</span>
+          <span class="op-blurb">Check an artifact against a public key.</span>
+        </button>
+        <button type="button" class="op-card op-compose" data-open-window="compose">
+          <span class="op-code">04</span>
+          <span class="op-name">Compose</span>
+          <span class="op-blurb">Join payload and carrier. No crypto.</span>
+        </button>
+        <button type="button" class="op-card op-decompose" data-open-window="decompose">
+          <span class="op-code">05</span>
+          <span class="op-name">Decompose</span>
+          <span class="op-blurb">Split an artifact into payload and carrier.</span>
+        </button>
+      </nav>
+
+      <footer>
+        <p>
+          Powered by
+          <a href="https://github.com/canardleteer/yaml-sigil-rs/tree/feat/wasm">yaml-sigil-rs feat/wasm</a>.
+          Form selectors are exact: <code>yaml</code> / <code>protobuf</code>
+          (shown as protobuf (base64)).
+          YAML decompose omits outer conformance; protobuf requires
+          <code>strict</code> or <code>signature_strict</code>.
+        </p>
+      </footer>
+    </main>
+
+    <section class="window window-validate" data-window="validate" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">01 // parse</p>
+          <h1>VALIDATE</h1>
+        </div>
+        <button type="button" id="btn-validate" class="primary">Parse YAML</button>
+        <button type="button" id="btn-send-sign">Send to sign</button>
+      </header>
+      <div class="window-body stack">
+        <article class="panel grow" id="validate-yaml-box">
+          <h2>YAML source</h2>
+          <textarea id="validate-yaml" spellcheck="false"></textarea>
+          <div class="result-flash" id="validate-flash" aria-hidden="true">
+            <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M34 62 L52 82 L88 38"></path>
+            </svg>
+            <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M40 40 L80 80"></path>
+              <path d="M80 40 L40 80"></path>
+            </svg>
+          </div>
+        </article>
+        <p id="validate-status" class="status">idle</p>
+      </div>
+    </section>
+
+    <section class="window window-sign" data-window="sign" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">02 // mark</p>
+          <h1>SIGN</h1>
+        </div>
+        <button type="button" id="btn-sign" class="primary">Sign</button>
+        <button type="button" id="btn-send-verify">Send to verify</button>
+        <button type="button" id="btn-send-decompose">Send to decompose</button>
+      </header>
+      <div class="window-body sign-body">
+        <aside class="rail">
+          <h2>Ephemeral key pair</h2>
+          <label>
+            Algorithm
+            <select id="sign-algorithm">
+              <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
+                ED25519_PUREEDDSA_RAW_RS64_CANONICAL
+              </option>
+              <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
+                ECDSA_SECP256R1_SHA256_RAW_RS64
+              </option>
+            </select>
+          </label>
+          <button type="button" id="btn-mint-sign">Mint new pair</button>
+          <label>
+            Private (hex or base64, session only)
+            <input id="key-private" spellcheck="false" autocomplete="off" />
+          </label>
+          <label>
+            Public (hex or base64)
+            <input id="sign-public" spellcheck="false" autocomplete="off" />
+          </label>
+          <label>
+            Output form
+            <select id="sign-form">
+              <option value="yaml" selected>yaml</option>
+              <option value="protobuf">protobuf (base64)</option>
+            </select>
+          </label>
+          <label>
+            Optional keyid
+            <input id="sign-keyid" spellcheck="false" />
+          </label>
+          <p id="key-status" class="status">waiting for WASM…</p>
+        </aside>
+        <div class="work split">
+          <article class="panel grow">
+            <h2>Payload (YAML)</h2>
+            <textarea id="sign-payload" spellcheck="false"></textarea>
+          </article>
+          <article class="panel grow">
+            <h2>Signed artifact</h2>
+            <textarea id="sign-artifact" spellcheck="false" readonly></textarea>
+          </article>
+        </div>
+        <p id="sign-status" class="status span">idle</p>
+      </div>
+    </section>
+
+    <section class="window window-verify" data-window="verify" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">03 // check</p>
+          <h1>VERIFY</h1>
+        </div>
+        <button type="button" id="btn-verify" class="primary">Verify</button>
+      </header>
+      <div class="window-body verify-body">
+        <div class="work stacked">
+          <article class="panel grow">
+            <h2>Artifact</h2>
+            <textarea id="verify-artifact" spellcheck="false"></textarea>
+          </article>
+          <article class="panel grow" id="verify-payload-box">
+            <h2>Authenticated payload</h2>
+            <textarea id="verify-payload" spellcheck="false" readonly></textarea>
+            <div class="result-flash" id="verify-flash" aria-hidden="true">
+              <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <circle cx="60" cy="60" r="50"></circle>
+                <path d="M34 62 L52 82 L88 38"></path>
+              </svg>
+              <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <circle cx="60" cy="60" r="50"></circle>
+                <path d="M40 40 L80 80"></path>
+                <path d="M80 40 L40 80"></path>
+              </svg>
+            </div>
+          </article>
+        </div>
+        <aside class="rail">
+          <h2>Session key pair</h2>
+          <label>
+            Algorithm
+            <select id="verify-algorithm">
+              <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
+                ED25519_PUREEDDSA_RAW_RS64_CANONICAL
+              </option>
+              <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
+                ECDSA_SECP256R1_SHA256_RAW_RS64
+              </option>
+            </select>
+          </label>
+          <button type="button" id="btn-mint-verify">Mint new pair</button>
+          <label>
+            Private (hex or base64, session only)
+            <input id="verify-private" spellcheck="false" autocomplete="off" />
+          </label>
+          <label>
+            Public (hex or base64)
+            <input id="key-public" spellcheck="false" autocomplete="off" />
+          </label>
+          <label>
+            Artifact form
+            <select id="verify-form">
+              <option value="yaml" selected>yaml</option>
+              <option value="protobuf">protobuf (base64)</option>
+            </select>
+          </label>
+          <p id="verify-status" class="status">idle</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="window window-compose" data-window="compose" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">04 // join</p>
+          <h1>COMPOSE</h1>
+        </div>
+        <label class="bar-field">
+          Form
+          <select id="compose-form">
+            <option value="yaml" selected>yaml</option>
+            <option value="protobuf">protobuf (base64)</option>
+          </select>
+        </label>
+        <button type="button" id="btn-compose" class="primary">Compose</button>
+      </header>
+      <div class="window-body compose-body" id="compose-body">
+        <div class="split">
+          <article class="panel grow">
+            <h2>Payload</h2>
+            <textarea id="compose-payload" spellcheck="false"></textarea>
+          </article>
+          <article class="panel grow" id="compose-carrier-box">
+            <h2>Signature carrier</h2>
+            <textarea id="compose-carrier" class="hide-in-proto" spellcheck="false"></textarea>
+            <div class="proto-form" id="compose-carrier-form">
+              <p class="proto-type">YamlSigilSignature</p>
+              <label>
+                alg
+                <select id="compose-carrier-alg">
+                  <option value="ALGORITHM_UNSPECIFIED">ALGORITHM_UNSPECIFIED</option>
+                  <option value="ALGORITHM_ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
+                    ALGORITHM_ED25519_PUREEDDSA_RAW_RS64_CANONICAL
+                  </option>
+                  <option value="ALGORITHM_ECDSA_SECP256R1_SHA256_RAW_RS64">
+                    ALGORITHM_ECDSA_SECP256R1_SHA256_RAW_RS64
+                  </option>
+                </select>
+              </label>
+              <label>
+                keyid
+                <input id="compose-carrier-keyid" spellcheck="false" />
+              </label>
+              <label class="grow-field">
+                signature (base64)
+                <textarea id="compose-carrier-signature" spellcheck="false"></textarea>
+              </label>
+            </div>
+            <svg class="proto-fail" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M40 40 L80 80"></path>
+              <path d="M80 40 L40 80"></path>
+            </svg>
+            <div class="result-flash" id="compose-carrier-flash" aria-hidden="true">
+              <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <circle cx="60" cy="60" r="50"></circle>
+                <path d="M34 62 L52 82 L88 38"></path>
+              </svg>
+              <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <circle cx="60" cy="60" r="50"></circle>
+                <path d="M40 40 L80 80"></path>
+                <path d="M80 40 L40 80"></path>
+              </svg>
+            </div>
+          </article>
+        </div>
+        <article class="panel grow" id="compose-artifact-box">
+          <h2>Artifact</h2>
+          <textarea id="compose-artifact" class="hide-in-proto" spellcheck="false" readonly></textarea>
+          <div class="proto-form" id="compose-artifact-form">
+            <p class="proto-type">SignedYamlArtifact</p>
+            <label class="grow-field">
+              payload
+              <textarea id="compose-artifact-payload" spellcheck="false" readonly></textarea>
+            </label>
+            <p class="proto-type">signature · YamlSigilSignature</p>
+            <label>
+              alg
+              <input id="compose-artifact-alg" spellcheck="false" readonly />
+            </label>
+            <label>
+              keyid
+              <input id="compose-artifact-keyid" spellcheck="false" readonly />
+            </label>
+            <label class="grow-field">
+              signature (base64)
+              <textarea id="compose-artifact-signature" spellcheck="false" readonly></textarea>
+            </label>
+          </div>
+          <svg class="proto-fail" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+            <circle cx="60" cy="60" r="50"></circle>
+            <path d="M40 40 L80 80"></path>
+            <path d="M80 40 L40 80"></path>
+          </svg>
+          <div class="result-flash" id="compose-artifact-flash" aria-hidden="true">
+            <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M34 62 L52 82 L88 38"></path>
+            </svg>
+            <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M40 40 L80 80"></path>
+              <path d="M80 40 L40 80"></path>
+            </svg>
+          </div>
+        </article>
+        <p id="compose-status" class="status">idle</p>
+      </div>
+    </section>
+
+    <section class="window window-decompose" data-window="decompose" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">05 // split</p>
+          <h1>DECOMPOSE</h1>
+        </div>
+        <label class="bar-field">
+          Form
+          <select id="decompose-form">
+            <option value="yaml" selected>yaml</option>
+            <option value="protobuf">protobuf (base64)</option>
+          </select>
+        </label>
+        <label class="bar-field">
+          Outer conformance (protobuf only)
+          <select id="decompose-outer">
+            <option value="omit" selected>omit (YAML)</option>
+            <option value="strict">strict</option>
+            <option value="signature_strict">signature_strict</option>
+          </select>
+        </label>
+        <button type="button" id="btn-decompose" class="primary">Decompose</button>
+      </header>
+      <div class="window-body decompose-body" id="decompose-body">
+        <article class="panel grow" id="decompose-artifact-box">
+          <h2>Artifact</h2>
+          <textarea id="decompose-artifact" spellcheck="false"></textarea>
+          <div class="proto-form" id="decompose-artifact-form">
+            <p class="proto-type">SignedYamlArtifact</p>
+            <label class="grow-field">
+              payload
+              <textarea id="decompose-artifact-payload" spellcheck="false" readonly></textarea>
+            </label>
+            <p class="proto-type">signature · YamlSigilSignature</p>
+            <label>
+              alg
+              <input id="decompose-artifact-alg" spellcheck="false" readonly />
+            </label>
+            <label>
+              keyid
+              <input id="decompose-artifact-keyid" spellcheck="false" readonly />
+            </label>
+            <label class="grow-field">
+              signature (base64)
+              <textarea id="decompose-artifact-signature" spellcheck="false" readonly></textarea>
+            </label>
+          </div>
+          <svg class="proto-fail" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+            <circle cx="60" cy="60" r="50"></circle>
+            <path d="M40 40 L80 80"></path>
+            <path d="M80 40 L40 80"></path>
+          </svg>
+        </article>
+        <div class="result-stage" id="decompose-result-stage">
+          <div class="split">
+            <article class="panel grow" id="decompose-payload-box">
+              <h2>Payload</h2>
+              <textarea id="decompose-payload" spellcheck="false" readonly></textarea>
+            </article>
+            <article class="panel grow" id="decompose-carrier-box">
+              <h2>Signature carrier</h2>
+              <textarea id="decompose-carrier" class="hide-in-proto" spellcheck="false" readonly></textarea>
+              <div class="proto-form" id="decompose-carrier-form">
+                <p class="proto-type">YamlSigilSignature</p>
+                <label>
+                  alg
+                  <input id="decompose-carrier-alg" spellcheck="false" readonly />
+                </label>
+                <label>
+                  keyid
+                  <input id="decompose-carrier-keyid" spellcheck="false" readonly />
+                </label>
+                <label class="grow-field">
+                  signature (base64)
+                  <textarea id="decompose-carrier-signature" spellcheck="false" readonly></textarea>
+                </label>
+              </div>
+              <svg class="proto-fail" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <circle cx="60" cy="60" r="50"></circle>
+                <path d="M40 40 L80 80"></path>
+                <path d="M80 40 L40 80"></path>
+              </svg>
+            </article>
+          </div>
+          <div class="result-flash" id="decompose-flash" aria-hidden="true">
+            <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M34 62 L52 82 L88 38"></path>
+            </svg>
+            <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M40 40 L80 80"></path>
+              <path d="M80 40 L40 80"></path>
+            </svg>
+          </div>
+        </div>
+        <p id="decompose-status" class="status">idle</p>
+      </div>
+    </section>
+  </body>
+</html>

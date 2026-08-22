@@ -1,0 +1,14 @@
+[build]
+target = "index.html"
+dist = "dist"
+public_url = "./"
+
+[serve]
+# Listen on every interface (loopback + LAN). `open` only controls whether
+# Trunk launches a browser tab after the first build; leave it false.
+addresses = ["0.0.0.0"]
+port = 8080
+open = false
+
+[tools]
+wasm_bindgen = "0.2.127"

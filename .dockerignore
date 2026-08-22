@@ -1,0 +1,10 @@
+.git
+.github
+target
+dist
+**/*.rs.bk
+.DS_Store
+*.wasm
+pkg/
+compose.override.yaml
+.env

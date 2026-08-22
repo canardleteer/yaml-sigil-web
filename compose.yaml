@@ -1,0 +1,16 @@
+name: yaml-sigil-web
+
+services:
+  web:
+    build:
+      context: .
+      args:
+        RUST_IMAGE: ${RUST_IMAGE:-rust:bookworm}
+        TRUNK_VERSION: ${TRUNK_VERSION:-0.21.14}
+        PORT: ${PORT:-8393}
+    image: yaml-sigil-web:local
+    ports:
+      - "${PORT:-8393}:${PORT:-8393}"
+    environment:
+      PORT: ${PORT:-8393}
+    init: true
