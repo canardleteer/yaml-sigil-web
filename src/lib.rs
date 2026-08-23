@@ -5,6 +5,7 @@ mod identities;
 mod keys;
 mod ops;
 mod proto;
+mod qr;
 
 use wasm_bindgen::prelude::*;
 

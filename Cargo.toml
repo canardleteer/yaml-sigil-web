@@ -32,6 +32,7 @@ js-sys = { version = "=0.3.104", default-features = false, features = ["std"] }
 noyalib = { version = "0.0.26", default-features = false, features = ["std"] }
 p256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
 plot_icon = { version = "0.3.0", default-features = false, features = ["vec"] }
+qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
 rand = "0.8"
 serde_json = "1.0"
 wasm-bindgen = "=0.2.127"
@@ -44,13 +45,18 @@ zeroize = { version = "1.8", default-features = false, features = ["alloc"] }
 [dependencies.web-sys]
 version = "0.3"
 features = [
+    "Blob",
+    "BlobPropertyBag",
+    "CanvasRenderingContext2d",
     "CssStyleDeclaration",
     "Document",
     "DomTokenList",
     "Element",
     "Event",
     "EventTarget",
+    "HtmlAnchorElement",
     "HtmlButtonElement",
+    "HtmlCanvasElement",
     "HtmlElement",
     "HtmlInputElement",
     "HtmlSelectElement",
@@ -60,6 +66,7 @@ features = [
     "Node",
     "NodeList",
     "Location",
+    "Url",
     "Window",
     "console",
 ]

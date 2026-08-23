@@ -73,7 +73,7 @@ The first uncached build clones `yaml-sigil-rs` and may download Buf. Later buil
 
 ## Selectors
 
-Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as **protobuf (base64)**. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`. Changing **Form** on Compose or Decompose transcodes a signed artifact between yaml and protobuf when the bytes are not already in the selected form. Verify shows **Convert** when the artifact is a signed envelope in the other form.
+Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as **protobuf (base64)**. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`. Changing **Form** on Compose or Decompose transcodes a signed artifact between yaml and protobuf when the bytes are not already in the selected form. Verify shows **Convert** when the artifact is a signed envelope in the other form. Validate, Sign, and Compose offer a YAML QR code when the document is valid yaml and unmodified; protobuf keeps the button disabled.
 
 Algorithms:
 
