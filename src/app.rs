@@ -1187,6 +1187,7 @@ fn bind_verify(document: &Document) {
     bind_click(document, "btn-verify", |document| {
         run_verify(document, true)
     });
+    bind_click(document, "btn-verify-convert", convert_verify_artifact);
     bind_input_event(document, "verify-artifact", "input", schedule_verify);
     for id in ["verify-form", "verify-identity"] {
         bind_input_event(document, id, "change", schedule_verify);
@@ -1194,6 +1195,7 @@ fn bind_verify(document: &Document) {
 }
 
 fn schedule_verify(document: &Document) {
+    refresh_verify_convert(document);
     set_box_state(document, "verify-payload-box", "pending");
     let document = document.clone();
     debounce(&VERIFY_TIMER, LIVE_DELAY_MS, move || {
@@ -1201,8 +1203,32 @@ fn schedule_verify(document: &Document) {
     });
 }
 
+fn refresh_verify_convert(document: &Document) {
+    let artifact = textarea_value(document, "verify-artifact");
+    let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
+    let other = other_form(&form);
+    let show = !artifact.trim().is_empty()
+        && !signed_envelope_in_form(&artifact, &form)
+        && signed_envelope_in_form(&artifact, other);
+    set_hidden(document, "btn-verify-convert", !show);
+}
+
+fn convert_verify_artifact(document: &Document) {
+    let artifact = textarea_value(document, "verify-artifact");
+    let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
+    let transcoded = ops::transcode(&artifact, other_form(&form), &form);
+    if transcoded.status != "success" {
+        show_result(document, "verify-status", &transcoded);
+        refresh_verify_convert(document);
+        return;
+    }
+    set_textarea(document, "verify-artifact", &transcoded.primary);
+    run_verify(document, false);
+}
+
 fn run_verify(document: &Document, flash: bool) {
     cancel_timer(&VERIFY_TIMER);
+    refresh_verify_convert(document);
     let artifact = textarea_value(document, "verify-artifact");
     if artifact.trim().is_empty() {
         set_textarea(document, "verify-payload", "");
@@ -1659,12 +1685,15 @@ fn apply_compose_transcode(document: &Document, next: &str, transcoded: &OpResul
 }
 
 fn signed_envelope_in_form(artifact: &str, form: &str) -> bool {
-    let other = if form == "protobuf" {
+    ops::transcode(artifact, form, other_form(form)).status == "success"
+}
+
+fn other_form(form: &str) -> &'static str {
+    if form == "protobuf" {
         "yaml"
     } else {
         "protobuf"
-    };
-    ops::transcode(artifact, form, other).status == "success"
+    }
 }
 
 fn update_outer_enabled(document: &Document) {
