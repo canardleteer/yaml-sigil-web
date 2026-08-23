@@ -73,13 +73,13 @@ The first uncached build clones `yaml-sigil-rs` and may download Buf. Later buil
 
 ## Selectors
 
-Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as **protobuf (base64)**. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`.
+Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as **protobuf (base64)**. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`. Changing **Form** on Compose or Decompose transcodes a signed artifact between yaml and protobuf when the bytes are not already in the selected form.
 
 Algorithms:
 
 - `ED25519_PUREEDDSA_RAW_RS64_CANONICAL` — 32-byte seed / 32-byte public key
 - `ECDSA_SECP256R1_SHA256_RAW_RS64` — 32-byte scalar / SEC1 public point (compressed or uncompressed)
 
-Keys may be hex (`0x` optional) or base64. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
+Keys may be hex (`0x` optional) or base64. Each identity has an optional `keyid` hint (1 to 1024 bytes, no CR/LF); alice, bob, and carol start with their names. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
 
 Protobuf wire encoding uses [buffa](https://crates.io/crates/buffa) inside `yaml-sigil-core` (pure Rust, including `wasm32-unknown-unknown`).

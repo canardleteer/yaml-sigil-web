@@ -194,6 +194,10 @@
               <input id="identity-new-name" spellcheck="false" autocomplete="off" />
             </label>
             <label>
+              Optional keyid
+              <input id="identity-new-keyid" spellcheck="false" autocomplete="off" />
+            </label>
+            <label>
               Algorithm
               <select id="identity-new-algorithm">
                 <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
@@ -225,6 +229,10 @@
               <span class="identicon" id="identity-selected-icon"></span>
               <span id="identity-selected-title">Selected</span>
             </h2>
+            <label>
+              Optional keyid
+              <input id="identity-keyid" spellcheck="false" autocomplete="off" />
+            </label>
             <label>
               Algorithm
               <select id="identity-algorithm">
@@ -460,7 +468,7 @@
         </div>
         <article class="panel form-strip">
           <h2>Form</h2>
-          <select id="compose-form" aria-label="Form">
+          <select id="compose-form" aria-label="Form" title="Changing form transcodes yaml ↔ protobuf">
             <option value="yaml" selected>yaml</option>
             <option value="protobuf">protobuf (base64)</option>
           </select>
@@ -546,7 +554,7 @@
           <div class="form-strip-fields">
             <label class="panel-field">
               Form
-              <select id="decompose-form">
+              <select id="decompose-form" title="Changing form transcodes yaml ↔ protobuf">
                 <option value="yaml" selected>yaml</option>
                 <option value="protobuf">protobuf (base64)</option>
               </select>
