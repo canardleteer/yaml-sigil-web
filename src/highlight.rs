@@ -157,7 +157,7 @@ fn tokenize_flow(line: &str, out: &mut String) {
             continue;
         }
         let end = scan_plain(line, i);
-        escape_into(out, &line[i..end]);
+        push_span(out, Kind::String, &line[i..end]);
         i = end;
     }
 }
@@ -367,6 +367,15 @@ mod tests {
         let painted = html(yaml);
         assert!(painted.contains("yaml-string"));
         assert!(!painted.contains("yaml-doc"));
+    }
+
+    #[test]
+    fn quoted_and_plain_scalars_share_string_class() {
+        let quoted = html("note: \"ridge-line cache\"\n");
+        let plain = html("note: ridge-line cache\n");
+        assert!(quoted.contains("yaml-string"));
+        assert!(plain.contains("yaml-string"));
+        assert!(plain.contains("ridge-line"));
     }
 
     #[test]
