@@ -1,7 +1,18 @@
 //! QR encoding of YAML text for the playground (SVG + module matrix).
 
-use qrcode::QrCode;
 use qrcode::render::svg;
+use qrcode::{EcLevel, QrCode};
+
+/// Medium error correction: about 15% redundancy.
+const EC_LEVEL: EcLevel = EcLevel::M;
+
+fn qr_code(text: &str) -> Result<QrCode, String> {
+    if text.is_empty() {
+        return Err("empty".into());
+    }
+    QrCode::with_error_correction_level(text.as_bytes(), EC_LEVEL)
+        .map_err(|error| error.to_string())
+}
 
 #[derive(Clone, Debug)]
 pub struct QrImage {
@@ -12,10 +23,7 @@ pub struct QrImage {
 }
 
 pub fn encode(text: &str) -> Result<QrImage, String> {
-    if text.is_empty() {
-        return Err("empty".into());
-    }
-    let code = QrCode::new(text.as_bytes()).map_err(|error| error.to_string())?;
+    let code = qr_code(text)?;
     let width = code.width();
     let mut modules = Vec::with_capacity(width * width);
     for y in 0..width {
@@ -38,7 +46,7 @@ pub fn encode(text: &str) -> Result<QrImage, String> {
 }
 
 pub fn can_encode(text: &str) -> bool {
-    !text.is_empty() && QrCode::new(text.as_bytes()).is_ok()
+    qr_code(text).is_ok()
 }
 
 #[cfg(test)]
@@ -54,6 +62,10 @@ mod tests {
         assert!(image.svg.contains("#ffffff"));
         assert_eq!(image.modules.len(), image.width * image.width);
         assert!(image.width >= 21);
+        assert_eq!(
+            qr_code(yaml).expect("code").error_correction_level(),
+            EcLevel::M
+        );
         assert!(can_encode(yaml));
     }
 
