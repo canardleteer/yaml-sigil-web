@@ -247,31 +247,11 @@ fn bind_identity(document: &Document) {
         closure.forget();
     }
     for id in ["btn-identity-mint", "btn-identity-add-bar"] {
-        if let Some(btn) = button(document, id) {
-            let document = document.clone();
-            let closure = Closure::<dyn FnMut()>::new(move || mint_identity(&document));
-            let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-            closure.forget();
-        }
+        bind_click(document, id, mint_identity);
     }
-    if let Some(btn) = button(document, "btn-identity-add") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || add_pasted_identity(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-identity-remint") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || remint_selected(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-identity-delete") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || delete_selected(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-identity-add", add_pasted_identity);
+    bind_click(document, "btn-identity-remint", remint_selected);
+    bind_click(document, "btn-identity-delete", delete_selected);
     for id in ["identity-private", "identity-public"] {
         bind_input_event(document, id, "input", persist_selected_keys);
     }
@@ -949,12 +929,9 @@ fn with_identity_sync(f: impl FnOnce()) {
 
 fn bind_validate(document: &Document) {
     bind_input_event(document, "validate-yaml", "input", schedule_validate);
-    if let Some(btn) = button(document, "btn-validate") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || run_validate(&document, true));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-validate", |document| {
+        run_validate(document, true)
+    });
 }
 
 fn schedule_validate(document: &Document) {
@@ -986,12 +963,7 @@ fn copy_validate_to_sign(document: &Document) {
 }
 
 fn bind_sign(document: &Document) {
-    if let Some(btn) = button(document, "btn-sign") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || run_sign(&document, true));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-sign", |document| run_sign(document, true));
     bind_input_event(document, "sign-form", "change", |document| {
         run_sign(document, false);
     });
@@ -1040,10 +1012,7 @@ fn run_sign(document: &Document, flash: bool) {
     );
     set_textarea(document, "sign-artifact", &result.primary);
     if result.status == "success" {
-        set_textarea(document, "verify-artifact", &result.primary);
-        set_select(document, "verify-form", &form);
-        set_textarea(document, "decompose-artifact", &result.primary);
-        set_select(document, "decompose-form", &form);
+        copy_artifact_to_verify_and_decompose(document, &result.primary, &form);
     }
     show_result(document, "sign-status", &result);
     if flash {
@@ -1052,56 +1021,30 @@ fn run_sign(document: &Document, flash: bool) {
 }
 
 fn bind_send(document: &Document) {
-    if let Some(btn) = button(document, "btn-send-sign") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_from_validate(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-verify") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_from_sign(&document, "verify"));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-decompose") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_from_sign(&document, "decompose"));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-compose") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_from_decompose(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-compose-verify") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_from_compose(&document, "verify"));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-compose-decompose") {
-        let document = document.clone();
-        let closure =
-            Closure::<dyn FnMut()>::new(move || send_from_compose(&document, "decompose"));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-verify-decompose") {
-        let document = document.clone();
-        let closure =
-            Closure::<dyn FnMut()>::new(move || send_verify_artifact_to_decompose(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
-    if let Some(btn) = button(document, "btn-send-verify-sign") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || send_verify_payload_to_sign(&document));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-send-sign", send_from_validate);
+    bind_click(document, "btn-send-verify", |document| {
+        send_from_sign(document, "verify")
+    });
+    bind_click(document, "btn-send-decompose", |document| {
+        send_from_sign(document, "decompose")
+    });
+    bind_click(document, "btn-send-compose", send_from_decompose);
+    bind_click(document, "btn-send-compose-verify", |document| {
+        send_from_compose(document, "verify")
+    });
+    bind_click(document, "btn-send-compose-decompose", |document| {
+        send_from_compose(document, "decompose")
+    });
+    bind_click(
+        document,
+        "btn-send-verify-decompose",
+        send_verify_artifact_to_decompose,
+    );
+    bind_click(
+        document,
+        "btn-send-verify-sign",
+        send_verify_payload_to_sign,
+    );
 }
 
 fn send_from_validate(document: &Document) {
@@ -1121,11 +1064,7 @@ fn send_from_sign(document: &Document, dest: &str) {
         return;
     }
     let form = select_value(document, "sign-form").unwrap_or_else(|| "yaml".into());
-    set_textarea(document, "verify-artifact", &artifact);
-    set_select(document, "verify-form", &form);
-    set_textarea(document, "decompose-artifact", &artifact);
-    set_select(document, "decompose-form", &form);
-    update_outer_enabled(document);
+    copy_artifact_to_verify_and_decompose(document, &artifact, &form);
     set_hash(dest);
 }
 
@@ -1142,10 +1081,7 @@ fn send_from_decompose(document: &Document) {
         return;
     }
     let form = select_value(document, "decompose-form").unwrap_or_else(|| "yaml".into());
-    set_textarea(document, "compose-payload", &payload);
-    set_textarea(document, "compose-carrier", &carrier);
-    set_select(document, "compose-form", &form);
-    update_compose_proto_mode(document);
+    copy_parts_to_compose(document, &payload, &carrier, &form);
     set_hash("compose");
 }
 
@@ -1161,11 +1097,7 @@ fn send_from_compose(document: &Document, dest: &str) {
         return;
     }
     let form = select_value(document, "compose-form").unwrap_or_else(|| "yaml".into());
-    set_textarea(document, "verify-artifact", &artifact);
-    set_select(document, "verify-form", &form);
-    set_textarea(document, "decompose-artifact", &artifact);
-    set_select(document, "decompose-form", &form);
-    update_outer_enabled(document);
+    copy_artifact_to_verify_and_decompose(document, &artifact, &form);
     set_hash(dest);
 }
 
@@ -1203,12 +1135,9 @@ fn send_verify_payload_to_sign(document: &Document) {
 }
 
 fn bind_verify(document: &Document) {
-    if let Some(btn) = button(document, "btn-verify") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || run_verify(&document, true));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-verify", |document| {
+        run_verify(document, true)
+    });
     bind_input_event(document, "verify-artifact", "input", schedule_verify);
     for id in ["verify-form", "verify-identity"] {
         bind_input_event(document, id, "change", schedule_verify);
@@ -1293,12 +1222,9 @@ fn matching_other_identity(artifact: &str, form: &str, skip_id: &str) -> Option<
 }
 
 fn bind_compose(document: &Document) {
-    if let Some(btn) = button(document, "btn-compose") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || run_compose(&document, true));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-compose", |document| {
+        run_compose(document, true)
+    });
     bind_input_event(
         document,
         "compose-carrier-alg",
@@ -1436,12 +1362,9 @@ fn refresh_compose_artifact_view(document: &Document, form: &str, artifact: &str
 }
 
 fn bind_decompose(document: &Document) {
-    if let Some(btn) = button(document, "btn-decompose") {
-        let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || run_decompose(&document, true));
-        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-        closure.forget();
-    }
+    bind_click(document, "btn-decompose", |document| {
+        run_decompose(document, true)
+    });
     bind_input_event(document, "decompose-artifact", "input", schedule_decompose);
     bind_input_event(document, "decompose-outer", "change", schedule_decompose);
 }
@@ -1478,10 +1401,7 @@ fn run_decompose(document: &Document, flash: bool) {
     set_textarea(document, "decompose-payload", &result.primary);
     set_textarea(document, "decompose-carrier", &result.extra);
     if result.status == "ok" {
-        set_textarea(document, "compose-payload", &result.primary);
-        set_textarea(document, "compose-carrier", &result.extra);
-        set_select(document, "compose-form", &form);
-        update_compose_proto_mode(document);
+        copy_parts_to_compose(document, &result.primary, &result.extra, &form);
     }
     let ok = result.status == "ok";
     set_box_state(
@@ -1619,6 +1539,25 @@ fn bind_input_event(
     let closure = Closure::<dyn FnMut()>::new(move || on_event(&document));
     let _ = el.add_event_listener_with_callback(event, closure.as_ref().unchecked_ref());
     closure.forget();
+}
+
+fn bind_click(document: &Document, id: &str, on_click: impl Fn(&Document) + 'static) {
+    bind_input_event(document, id, "click", on_click);
+}
+
+fn copy_artifact_to_verify_and_decompose(document: &Document, artifact: &str, form: &str) {
+    set_textarea(document, "verify-artifact", artifact);
+    set_select(document, "verify-form", form);
+    set_textarea(document, "decompose-artifact", artifact);
+    set_select(document, "decompose-form", form);
+    update_outer_enabled(document);
+}
+
+fn copy_parts_to_compose(document: &Document, payload: &str, carrier: &str, form: &str) {
+    set_textarea(document, "compose-payload", payload);
+    set_textarea(document, "compose-carrier", carrier);
+    set_select(document, "compose-form", form);
+    update_compose_proto_mode(document);
 }
 
 fn set_box_state(document: &Document, id: &str, state: &str) {
@@ -1863,11 +1802,4 @@ fn set_select(document: &Document, id: &str, value: &str) {
     if let Some(el) = select(document, id) {
         el.set_value(value);
     }
-}
-
-fn button(document: &Document, id: &str) -> Option<HtmlButtonElement> {
-    document
-        .get_element_by_id(id)?
-        .dyn_into::<HtmlButtonElement>()
-        .ok()
 }
