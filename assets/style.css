@@ -357,6 +357,78 @@ textarea {
   caret-color: var(--foxfire);
 }
 
+.yaml-editor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.yaml-hl {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+  white-space: pre;
+  tab-size: 8;
+  font: inherit;
+  line-height: 1.4;
+  padding: 0.5rem 0.6rem;
+  color: var(--soot);
+  background: #050705;
+  border: 1px solid var(--wire);
+  border-radius: 0;
+}
+
+.yaml-editor textarea {
+  position: relative;
+  z-index: 1;
+  color: transparent;
+  background: transparent;
+  overflow: auto;
+  resize: none;
+}
+
+.yaml-editor.is-plain .yaml-hl {
+  display: none;
+}
+
+.yaml-editor.is-plain textarea {
+  color: var(--soot);
+  background: #050705;
+}
+
+.yaml-comment {
+  color: var(--steel);
+}
+
+.yaml-key {
+  color: var(--sap);
+}
+
+.yaml-string,
+.yaml-tag {
+  color: var(--foxfire);
+}
+
+.yaml-number,
+.yaml-bool,
+.yaml-null,
+.yaml-anchor {
+  color: var(--amber);
+}
+
+.yaml-punct {
+  color: var(--soot);
+}
+
+.yaml-doc {
+  color: var(--amber);
+  font-weight: 700;
+}
+
 input,
 select {
   width: 100%;
@@ -1136,7 +1208,15 @@ label.check input {
   height: 100%;
 }
 
+.panel.grow .yaml-editor,
+.window-body .yaml-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
 .panel.grow textarea,
+.panel.grow .yaml-editor textarea,
 .window-body textarea {
   flex: 1 1 auto;
   min-height: 0;
@@ -1174,8 +1254,10 @@ label.check input {
   min-height: 0;
 }
 
-.proto-form .grow-field textarea {
+.proto-form .grow-field textarea,
+.proto-form .grow-field .yaml-editor {
   min-height: 3.5rem;
+  flex: 1 1 auto;
 }
 
 #compose-carrier-box,
@@ -1325,6 +1407,7 @@ code {
   }
 
   .panel.grow textarea,
+  .panel.grow .yaml-editor,
   .window-body textarea,
   textarea {
     min-height: 12rem;
@@ -1337,7 +1420,11 @@ code {
   #sign-artifact,
   #verify-artifact,
   #compose-artifact,
-  #decompose-artifact {
+  #decompose-artifact,
+  .yaml-editor:has(#sign-artifact),
+  .yaml-editor:has(#verify-artifact),
+  .yaml-editor:has(#compose-artifact),
+  .yaml-editor:has(#decompose-artifact) {
     min-height: 20rem;
     height: 20rem;
   }
