@@ -3,16 +3,19 @@
 use std::cell::{Cell, RefCell};
 
 use wasm_bindgen::JsCast;
+use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 use web_sys::{
-    Document, HtmlButtonElement, HtmlElement, HtmlInputElement, HtmlSelectElement,
-    HtmlTextAreaElement, KeyboardEvent,
+    Blob, BlobPropertyBag, CanvasRenderingContext2d, Document, HtmlAnchorElement, HtmlButtonElement,
+    HtmlCanvasElement, HtmlElement, HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement,
+    KeyboardEvent, Url,
 };
 
 use crate::identicon;
 use crate::identities::{Roster, short_alg, trunc_hex};
 use crate::ops::{self, ED25519_NAME, OpResult};
 use crate::proto::{self, ArtifactFields, SignatureFields};
+use crate::qr::{self, QrImage};
 
 const SAMPLE_YAML: &str = r#"# A supply-wagon manifest
 claim: ridge-line cache
@@ -46,6 +49,10 @@ thread_local! {
     static CURRENT_ID: RefCell<String> = RefCell::new(DEFAULT_IDENTITY.to_string());
     static LAST_COMPOSE_FORM: RefCell<String> = const { RefCell::new(String::new()) };
     static LAST_DECOMPOSE_FORM: RefCell<String> = const { RefCell::new(String::new()) };
+    static LAST_VALIDATE_YAML: RefCell<String> = const { RefCell::new(String::new()) };
+    static LAST_SIGN_YAML: RefCell<String> = const { RefCell::new(String::new()) };
+    static LAST_COMPOSE_YAML: RefCell<String> = const { RefCell::new(String::new()) };
+    static QR_IMAGE: RefCell<Option<QrImage>> = const { RefCell::new(None) };
 }
 
 pub fn boot() {
@@ -63,6 +70,7 @@ pub fn boot() {
     bind_decompose(&document);
     bind_form_toggles(&document);
     bind_current_id_menu(&document);
+    bind_qr(&document);
 
     if let Some(yaml) = textarea(&document, "validate-yaml") {
         yaml.set_value(SAMPLE_YAML);
@@ -721,7 +729,11 @@ fn bind_current_id_menu(document: &Document) {
     let document_key = document.clone();
     let on_key = Closure::<dyn FnMut(KeyboardEvent)>::new(move |event: KeyboardEvent| {
         if event.key() == "Escape" {
-            close_current_id_menu(&document_key);
+            if qr_modal_open(&document_key) {
+                close_qr_modal(&document_key);
+            } else {
+                close_current_id_menu(&document_key);
+            }
         }
     });
     if let Some(window) = web_sys::window() {
@@ -968,7 +980,10 @@ fn with_identity_sync(f: impl FnOnce()) {
 }
 
 fn bind_validate(document: &Document) {
-    bind_input_event(document, "validate-yaml", "input", schedule_validate);
+    bind_input_event(document, "validate-yaml", "input", |document| {
+        refresh_qr_buttons(document);
+        schedule_validate(document);
+    });
     bind_click(document, "btn-validate", |document| {
         run_validate(document, true)
     });
@@ -989,6 +1004,12 @@ fn run_validate(document: &Document, flash: bool) {
     let ok = result.status == "success";
     set_box_state(document, "validate-yaml-box", if ok { "ok" } else { "err" });
     show_result(document, "validate-status", &result);
+    if ok && !yaml.is_empty() {
+        remember_validate_yaml(&yaml);
+    } else {
+        remember_validate_yaml("");
+    }
+    refresh_qr_buttons(document);
     if flash {
         play_flash(document, "validate-flash", ok);
     }
@@ -1009,6 +1030,8 @@ fn load_sign_payload(document: &Document, incoming: &str) {
 fn clear_sign_artifact(document: &Document) {
     set_textarea(document, "sign-artifact", "");
     set_status(document, "sign-status", "", "idle");
+    remember_sign_yaml("");
+    refresh_qr_buttons(document);
 }
 
 fn bind_sign(document: &Document) {
@@ -1029,6 +1052,8 @@ fn run_sign(document: &Document, flash: bool) {
             "err",
             &format!("unknown identity '{id}'"),
         );
+        remember_sign_yaml("");
+        refresh_qr_buttons(document);
         if flash {
             play_flash(document, "sign-flash", false);
         }
@@ -1043,6 +1068,8 @@ fn run_sign(document: &Document, flash: bool) {
             "sign-status",
             &OpResult::invocation_error("verify_only_identity"),
         );
+        remember_sign_yaml("");
+        refresh_qr_buttons(document);
         if flash {
             play_flash(document, "sign-flash", false);
         }
@@ -1063,7 +1090,15 @@ fn run_sign(document: &Document, flash: bool) {
     set_textarea(document, "sign-artifact", &result.primary);
     if result.status == "success" {
         copy_artifact_to_verify_and_decompose(document, &result.primary, &form);
+        if form == "yaml" {
+            remember_sign_yaml(&result.primary);
+        } else {
+            remember_sign_yaml("");
+        }
+    } else {
+        remember_sign_yaml("");
     }
+    refresh_qr_buttons(document);
     show_result(document, "sign-status", &result);
     if flash {
         play_flash(document, "sign-flash", result.status == "success");
@@ -1309,6 +1344,8 @@ fn bind_compose(document: &Document) {
     for id in ["compose-carrier-keyid", "compose-carrier-signature"] {
         bind_input_event(document, id, "input", schedule_compose_carrier);
     }
+    bind_input_event(document, "compose-payload", "input", refresh_qr_buttons);
+    bind_input_event(document, "compose-carrier", "input", refresh_qr_buttons);
 }
 
 fn schedule_compose_carrier(document: &Document) {
@@ -1343,6 +1380,8 @@ fn run_compose(document: &Document, flash: bool) {
             play_flash(document, "compose-carrier-flash", false);
             play_flash(document, "compose-artifact-flash", false);
         }
+        remember_compose_yaml("");
+        refresh_qr_buttons(document);
         return;
     }
     let payload = textarea_value(document, "compose-payload");
@@ -1351,6 +1390,12 @@ fn run_compose(document: &Document, flash: bool) {
     set_textarea(document, "compose-artifact", &result.primary);
     refresh_compose_artifact_view(document, &form, &result.primary);
     show_result(document, "compose-status", &result);
+    if result.status == "success" && form == "yaml" {
+        remember_compose_yaml(&result.primary);
+    } else {
+        remember_compose_yaml("");
+    }
+    refresh_qr_buttons(document);
     if flash {
         let ok = result.status == "success";
         play_flash(document, "compose-artifact-flash", ok);
@@ -1617,6 +1662,7 @@ fn on_compose_form_change(document: &Document) {
     let prev = last_compose_form();
     if next == prev {
         update_compose_proto_mode(document);
+        refresh_qr_buttons(document);
         return;
     }
     if prev == "protobuf" {
@@ -1628,6 +1674,7 @@ fn on_compose_form_change(document: &Document) {
     if payload.trim().is_empty() && carrier.trim().is_empty() && artifact.trim().is_empty() {
         remember_compose_form(&next);
         update_compose_proto_mode(document);
+        refresh_qr_buttons(document);
         return;
     }
 
@@ -1656,12 +1703,15 @@ fn on_compose_form_change(document: &Document) {
             update_compose_proto_mode(document);
             refresh_compose_artifact_view(document, &next, &direct.primary);
             show_result(document, "compose-status", &direct);
+            snapshot_compose_yaml(&next, &direct.primary, true);
+            refresh_qr_buttons(document);
             return;
         }
     }
 
     set_select(document, "compose-form", &prev);
     update_compose_proto_mode(document);
+    refresh_qr_buttons(document);
     set_status(
         document,
         "compose-status",
@@ -1682,6 +1732,8 @@ fn apply_compose_transcode(document: &Document, next: &str, transcoded: &OpResul
     update_compose_proto_mode(document);
     refresh_compose_artifact_view(document, next, &transcoded.primary);
     show_result(document, "compose-status", transcoded);
+    snapshot_compose_yaml(next, &transcoded.primary, transcoded.status == "success");
+    refresh_qr_buttons(document);
 }
 
 fn signed_envelope_in_form(artifact: &str, form: &str) -> bool {
@@ -1707,6 +1759,222 @@ fn update_outer_enabled(document: &Document) {
         if !proto {
             outer.set_value("omit");
         }
+    }
+}
+
+fn bind_qr(document: &Document) {
+    bind_click(document, "btn-validate-qr", |document| {
+        if let Some(text) = validate_qr_payload(document) {
+            open_qr_modal(document, &text);
+        }
+    });
+    bind_click(document, "btn-sign-qr", |document| {
+        if let Some(text) = sign_qr_payload(document) {
+            open_qr_modal(document, &text);
+        }
+    });
+    bind_click(document, "btn-compose-qr", |document| {
+        if let Some(text) = compose_qr_payload(document) {
+            open_qr_modal(document, &text);
+        }
+    });
+    bind_click(document, "btn-qr-close", close_qr_modal);
+    bind_click(document, "qr-backdrop", close_qr_modal);
+    bind_click(document, "btn-qr-png", download_qr_png);
+    bind_click(document, "btn-qr-svg", download_qr_svg);
+    refresh_qr_buttons(document);
+}
+
+fn remember_validate_yaml(text: &str) {
+    LAST_VALIDATE_YAML.with(|cell| *cell.borrow_mut() = text.to_string());
+}
+
+fn remember_sign_yaml(text: &str) {
+    LAST_SIGN_YAML.with(|cell| *cell.borrow_mut() = text.to_string());
+}
+
+fn remember_compose_yaml(text: &str) {
+    LAST_COMPOSE_YAML.with(|cell| *cell.borrow_mut() = text.to_string());
+}
+
+fn yaml_qr_ready(current: &str, snapshot: &str) -> bool {
+    !current.is_empty() && current == snapshot && qr::can_encode(current)
+}
+
+fn validate_qr_payload(document: &Document) -> Option<String> {
+    let current = textarea_value(document, "validate-yaml");
+    let snapshot = LAST_VALIDATE_YAML.with(|cell| cell.borrow().clone());
+    yaml_qr_ready(&current, &snapshot).then_some(current)
+}
+
+fn sign_qr_payload(document: &Document) -> Option<String> {
+    let form = select_value(document, "sign-form").unwrap_or_else(|| "yaml".into());
+    if form != "yaml" {
+        return None;
+    }
+    let current = textarea_value(document, "sign-artifact");
+    let snapshot = LAST_SIGN_YAML.with(|cell| cell.borrow().clone());
+    yaml_qr_ready(&current, &snapshot).then_some(current)
+}
+
+fn compose_qr_payload(document: &Document) -> Option<String> {
+    let form = select_value(document, "compose-form").unwrap_or_else(|| "yaml".into());
+    if form != "yaml" {
+        return None;
+    }
+    let current = textarea_value(document, "compose-artifact");
+    let snapshot = LAST_COMPOSE_YAML.with(|cell| cell.borrow().clone());
+    yaml_qr_ready(&current, &snapshot).then_some(current)
+}
+
+fn refresh_qr_buttons(document: &Document) {
+    set_button_disabled(
+        document,
+        "btn-validate-qr",
+        validate_qr_payload(document).is_none(),
+    );
+    set_button_disabled(document, "btn-sign-qr", sign_qr_payload(document).is_none());
+    set_button_disabled(
+        document,
+        "btn-compose-qr",
+        compose_qr_payload(document).is_none(),
+    );
+}
+
+fn set_button_disabled(document: &Document, id: &str, disabled: bool) {
+    if let Some(button) = document
+        .get_element_by_id(id)
+        .and_then(|el| el.dyn_into::<HtmlButtonElement>().ok())
+    {
+        button.set_disabled(disabled);
+    }
+}
+
+fn qr_modal_open(document: &Document) -> bool {
+    document
+        .get_element_by_id("qr-modal")
+        .is_some_and(|el| !el.has_attribute("hidden"))
+}
+
+fn open_qr_modal(document: &Document, text: &str) {
+    let Ok(image) = qr::encode(text) else {
+        return;
+    };
+    close_current_id_menu(document);
+    if let Some(el) = document.get_element_by_id("qr-svg") {
+        el.set_inner_html(&image.svg);
+    }
+    QR_IMAGE.with(|cell| *cell.borrow_mut() = Some(image));
+    set_hidden(document, "qr-modal", false);
+}
+
+fn close_qr_modal(document: &Document) {
+    set_hidden(document, "qr-modal", true);
+    if let Some(el) = document.get_element_by_id("qr-svg") {
+        el.set_inner_html("");
+    }
+    QR_IMAGE.with(|cell| *cell.borrow_mut() = None);
+}
+
+fn download_qr_png(document: &Document) {
+    let Some(image) = QR_IMAGE.with(|cell| cell.borrow().clone()) else {
+        return;
+    };
+    let Ok(url) = qr_png_data_url(document, &image) else {
+        return;
+    };
+    trigger_download(document, &url, "yaml-sigil.png");
+}
+
+fn download_qr_svg(document: &Document) {
+    let Some(svg) = QR_IMAGE.with(|cell| cell.borrow().as_ref().map(|image| image.svg.clone()))
+    else {
+        return;
+    };
+    let parts = js_sys::Array::new();
+    parts.push(&JsValue::from_str(&svg));
+    let options = BlobPropertyBag::new();
+    options.set_type("image/svg+xml;charset=utf-8");
+    let Ok(blob) = Blob::new_with_str_sequence_and_options(&parts, &options) else {
+        return;
+    };
+    let Ok(url) = Url::create_object_url_with_blob(&blob) else {
+        return;
+    };
+    trigger_download(document, &url, "yaml-sigil.svg");
+    let href = url.clone();
+    let closure = Closure::once(move || {
+        let _ = Url::revoke_object_url(&href);
+    });
+    if let Some(window) = web_sys::window() {
+        let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(
+            closure.as_ref().unchecked_ref(),
+            1_000,
+        );
+        closure.forget();
+    }
+}
+
+fn trigger_download(document: &Document, href: &str, filename: &str) {
+    let Ok(el) = document.create_element("a") else {
+        return;
+    };
+    let Ok(anchor) = el.dyn_into::<HtmlAnchorElement>() else {
+        return;
+    };
+    anchor.set_href(href);
+    anchor.set_download(filename);
+    let _ = anchor.set_attribute("hidden", "");
+    let Some(body) = document.body() else {
+        return;
+    };
+    let _ = body.append_child(&anchor);
+    anchor.click();
+    let _ = body.remove_child(&anchor);
+}
+
+fn qr_png_data_url(document: &Document, image: &QrImage) -> Result<String, JsValue> {
+    const QUIET: u32 = 4;
+    let modules = u32::try_from(image.width).unwrap_or(0);
+    let dim = modules.saturating_add(QUIET.saturating_mul(2));
+    if dim == 0 || image.modules.len() != image.width * image.width {
+        return Err(JsValue::from_str("invalid qr matrix"));
+    }
+    let scale = (512 / dim).max(4);
+    let size = dim.saturating_mul(scale);
+    let canvas = document
+        .create_element("canvas")?
+        .dyn_into::<HtmlCanvasElement>()?;
+    canvas.set_width(size);
+    canvas.set_height(size);
+    let context = canvas
+        .get_context("2d")?
+        .ok_or_else(|| JsValue::from_str("2d context"))?
+        .dyn_into::<CanvasRenderingContext2d>()?;
+    context.set_fill_style_str("#ffffff");
+    context.fill_rect(0.0, 0.0, f64::from(size), f64::from(size));
+    context.set_fill_style_str("#000000");
+    for y in 0..modules {
+        for x in 0..modules {
+            let index = (y as usize) * image.width + (x as usize);
+            if image.modules.get(index).copied().unwrap_or(false) {
+                context.fill_rect(
+                    f64::from((x + QUIET) * scale),
+                    f64::from((y + QUIET) * scale),
+                    f64::from(scale),
+                    f64::from(scale),
+                );
+            }
+        }
+    }
+    canvas.to_data_url()
+}
+
+fn snapshot_compose_yaml(form: &str, artifact: &str, success: bool) {
+    if success && form == "yaml" {
+        remember_compose_yaml(artifact);
+    } else {
+        remember_compose_yaml("");
     }
 }
 

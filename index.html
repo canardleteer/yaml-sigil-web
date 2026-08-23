@@ -140,6 +140,7 @@
         </div>
         <button type="button" id="btn-validate" class="primary">Parse YAML</button>
         <button type="button" id="btn-send-sign">Send to sign</button>
+        <button type="button" id="btn-validate-qr" disabled>QR Code</button>
       </header>
       <div class="window-body">
         <article class="panel grow" id="validate-yaml-box">
@@ -332,6 +333,7 @@
           <div class="send-row">
             <button type="button" id="btn-send-verify">Send to verify</button>
             <button type="button" id="btn-send-decompose">Send to decompose</button>
+            <button type="button" id="btn-sign-qr" disabled>QR Code</button>
           </div>
         </div>
       </div>
@@ -519,6 +521,7 @@
           <div class="send-row">
             <button type="button" id="btn-send-compose-verify">Send to verify</button>
             <button type="button" id="btn-send-compose-decompose">Send to decompose</button>
+            <button type="button" id="btn-compose-qr" disabled>QR Code</button>
           </div>
         </div>
       </div>
@@ -623,5 +626,20 @@
     </section>
 
     <div id="current-id-menu" class="current-id-menu" hidden role="listbox" aria-label="Current identity"></div>
+
+    <div id="qr-modal" class="qr-modal" hidden>
+      <div class="qr-backdrop" id="qr-backdrop"></div>
+      <div class="qr-panel" role="dialog" aria-modal="true" aria-labelledby="qr-title">
+        <header class="qr-panel-head">
+          <h2 id="qr-title">QR Code</h2>
+          <button type="button" id="btn-qr-close" aria-label="Close">X</button>
+        </header>
+        <div class="qr-svg" id="qr-svg"></div>
+        <div class="qr-actions">
+          <button type="button" id="btn-qr-png">Download PNG</button>
+          <button type="button" id="btn-qr-svg">Download SVG</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

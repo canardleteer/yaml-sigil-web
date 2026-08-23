@@ -389,6 +389,22 @@ button:active {
   box-shadow: inset 0 0 0 1px #041208, 0 0 16px var(--glow);
 }
 
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+button:disabled:hover,
+button:disabled:active {
+  border-color: var(--wire);
+  background: #050705;
+  color: var(--foxfire);
+  box-shadow: none;
+  transform: none;
+}
+
 button.primary {
   background: var(--rust);
   color: #140804;
@@ -661,6 +677,82 @@ button.current-id[aria-expanded="true"] {
   flex: 0 0 auto;
   opacity: 0.7;
   font-size: 0.7em;
+}
+
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.qr-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 5, 0.82);
+}
+
+.qr-panel {
+  position: relative;
+  z-index: 1;
+  width: min(92vw, 72rem);
+  height: min(92vh, 54rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem 1.1rem 1.15rem;
+  background: var(--tar);
+  border: 1px solid var(--foxfire);
+  box-shadow: 0 0 28px var(--glow);
+}
+
+.qr-panel-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.qr-panel-head h2 {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--foxfire);
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+#btn-qr-close {
+  padding: 0.35rem 0.7rem;
+}
+
+.qr-svg {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 1.25rem;
+}
+
+.qr-svg svg {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.qr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+  flex: 0 0 auto;
 }
 
 .current-id-menu {
