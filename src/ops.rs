@@ -5,7 +5,8 @@ use p256::ecdsa::SigningKey as P256SigningKey;
 use yaml_sigil_core::AlgorithmId;
 use yaml_sigil_signing::{
     OutputForm, SignError, SignInvocationError, SignOutcome, SignRequest, SigningKey,
-    sign as sign_runtime,
+    TranscodeError, proto_wire_to_signed_yaml_stream, sign as sign_runtime,
+    signed_yaml_stream_to_proto_wire,
 };
 use yaml_sigil_transcription::{
     ComposeOutcome, ComposeRequest, DecomposeOutcome, DecomposeRequest, DecomposeResponse,
@@ -143,6 +144,34 @@ pub fn decompose(artifact_text: &str, form: &str, outer: Option<&str>) -> OpResu
                 OpResult::with_status("malformed_attempted_signed")
             }
         },
+    }
+}
+
+pub fn transcode(artifact_text: &str, from_form: &str, to_form: &str) -> OpResult {
+    if transcription_form(from_form).is_none() || transcription_form(to_form).is_none() {
+        return OpResult::invocation("invalid_or_unsupported_form");
+    }
+    if from_form == to_form {
+        let mut out = OpResult::with_status("success");
+        out.primary = artifact_text.to_string();
+        return out;
+    }
+    let decoded = match decode_payload(artifact_text, from_form) {
+        Ok(bytes) => bytes,
+        Err(msg) => return OpResult::err("invocation_error", &msg),
+    };
+    let converted = match (from_form, to_form) {
+        ("yaml", "protobuf") => signed_yaml_stream_to_proto_wire(&decoded),
+        ("protobuf", "yaml") => proto_wire_to_signed_yaml_stream(&decoded),
+        _ => return OpResult::invocation("invalid_or_unsupported_form"),
+    };
+    match converted {
+        Ok(bytes) => {
+            let mut out = OpResult::with_status("success");
+            out.primary = encode_payload(&bytes, to_form);
+            out
+        }
+        Err(error) => OpResult::err("transcode_error", transcode_error_code(&error)),
     }
 }
 
@@ -389,6 +418,19 @@ fn transcriber_error_code(error: TranscriberError) -> &'static str {
     }
 }
 
+fn transcode_error_code(error: &TranscodeError) -> &'static str {
+    match error {
+        TranscodeError::NotSignedYamlStream => "not_signed_yaml_stream",
+        TranscodeError::PayloadInvariant => "payload_invariant",
+        TranscodeError::InvalidSignatureBase64 => "invalid_signature_base64",
+        TranscodeError::UnknownYamlAlg => "unknown_yaml_alg",
+        TranscodeError::UnsupportedWireAlg => "unsupported_wire_alg",
+        TranscodeError::SchemaMismatch => "schema_mismatch",
+        TranscodeError::Core(_) => "core_error",
+        TranscodeError::YamlSerialize(_) => "yaml_serialize",
+    }
+}
+
 fn sign_invocation_code(error: SignInvocationError) -> &'static str {
     match error {
         SignInvocationError::InvalidOrUnsupportedAlgorithm => "invalid_or_unsupported_algorithm",
@@ -516,6 +558,66 @@ mod tests {
         assert_eq!(yaml_outer.status, "invocation_error");
         let proto_missing_outer = decompose("AAAA", "protobuf", None);
         assert_eq!(proto_missing_outer.status, "invocation_error");
+    }
+
+    #[test]
+    fn yaml_protobuf_transcode_round_trip_verifies() {
+        let pair = generate_keypair(ED25519_NAME).expect("keys");
+        let signed = sign(
+            YAML,
+            ED25519_NAME,
+            &pair.private_hex,
+            Some("demo"),
+            true,
+            "yaml",
+        );
+        assert_eq!(signed.status, "success", "{signed:?}");
+
+        let proto = transcode(&signed.primary, "yaml", "protobuf");
+        assert_eq!(proto.status, "success", "{proto:?}");
+        assert_ne!(proto.primary, signed.primary);
+
+        let verified_proto = verify(&proto.primary, "protobuf", ED25519_NAME, &pair.public_hex);
+        assert_eq!(verified_proto.status, "verified", "{verified_proto:?}");
+        assert_eq!(verified_proto.primary, YAML);
+
+        let yaml_again = transcode(&proto.primary, "protobuf", "yaml");
+        assert_eq!(yaml_again.status, "success", "{yaml_again:?}");
+        let verified_yaml = verify(&yaml_again.primary, "yaml", ED25519_NAME, &pair.public_hex);
+        assert_eq!(verified_yaml.status, "verified", "{verified_yaml:?}");
+        assert_eq!(verified_yaml.primary, YAML);
+
+        let same = transcode(&signed.primary, "yaml", "yaml");
+        assert_eq!(same.status, "success");
+        assert_eq!(same.primary, signed.primary);
+    }
+
+    #[test]
+    fn transcode_rejects_unsigned_yaml() {
+        let failed = transcode(YAML, "yaml", "protobuf");
+        assert_eq!(failed.status, "transcode_error", "{failed:?}");
+        assert_eq!(failed.code.as_deref(), Some("not_signed_yaml_stream"));
+    }
+
+    #[test]
+    fn yaml_join_of_protobuf_carrier_is_not_signed_yaml() {
+        let pair = generate_keypair(ED25519_NAME).expect("keys");
+        let signed = sign(
+            YAML,
+            ED25519_NAME,
+            &pair.private_hex,
+            None,
+            true,
+            "protobuf",
+        );
+        assert_eq!(signed.status, "success", "{signed:?}");
+        let parts = decompose(&signed.primary, "protobuf", Some("strict"));
+        assert_eq!(parts.status, "ok", "{parts:?}");
+
+        let joined = compose(&parts.primary, &parts.extra, "yaml");
+        assert_eq!(joined.status, "success", "{joined:?}");
+        let trans = transcode(&joined.primary, "yaml", "protobuf");
+        assert_eq!(trans.status, "transcode_error", "{trans:?}");
     }
 
     #[test]

@@ -44,6 +44,8 @@ thread_local! {
     static ROSTER: RefCell<Roster> = RefCell::new(Roster::default());
     static SELECTED_ID: RefCell<String> = RefCell::new(NEW_IDENTITY_ID.to_string());
     static CURRENT_ID: RefCell<String> = RefCell::new(DEFAULT_IDENTITY.to_string());
+    static LAST_COMPOSE_FORM: RefCell<String> = const { RefCell::new(String::new()) };
+    static LAST_DECOMPOSE_FORM: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
 pub fn boot() {
@@ -252,6 +254,7 @@ fn bind_identity(document: &Document) {
     bind_click(document, "btn-identity-add", add_pasted_identity);
     bind_click(document, "btn-identity-remint", remint_selected);
     bind_click(document, "btn-identity-delete", delete_selected);
+    bind_input_event(document, "identity-keyid", "input", persist_selected_keyid);
     for id in ["identity-private", "identity-public"] {
         bind_input_event(document, id, "input", persist_selected_keys);
     }
@@ -279,13 +282,14 @@ fn bind_identity(document: &Document) {
 
 fn mint_identity(document: &Document) {
     let label = input_value(document, "identity-new-name");
+    let keyid = input_value(document, "identity-new-keyid");
     let algorithm =
         select_value(document, "identity-new-algorithm").unwrap_or_else(|| ED25519_NAME.into());
     let verify_only = checkbox_checked(document, "identity-verify-only");
     let result = if verify_only {
-        with_roster_mut(|roster| roster.mint_verify_only(&label, &algorithm))
+        with_roster_mut(|roster| roster.mint_verify_only(&label, &algorithm, &keyid))
     } else {
-        with_roster_mut(|roster| roster.add(&label, &algorithm))
+        with_roster_mut(|roster| roster.add(&label, &algorithm, &keyid))
     };
     finish_new_identity(
         document,
@@ -300,10 +304,12 @@ fn mint_identity(document: &Document) {
 
 fn add_pasted_identity(document: &Document) {
     let label = input_value(document, "identity-new-name");
+    let keyid = input_value(document, "identity-new-keyid");
     let algorithm =
         select_value(document, "identity-new-algorithm").unwrap_or_else(|| ED25519_NAME.into());
     let public = input_value(document, "identity-new-public");
-    let result = with_roster_mut(|roster| roster.add_verify_only(&label, &algorithm, &public));
+    let result =
+        with_roster_mut(|roster| roster.add_verify_only(&label, &algorithm, &public, &keyid));
     finish_new_identity(
         document,
         result,
@@ -315,6 +321,7 @@ fn finish_new_identity(document: &Document, result: Result<String, String>, ok_t
     match result {
         Ok(id) => {
             set_input(document, "identity-new-name", "");
+            set_input(document, "identity-new-keyid", "");
             set_input(document, "identity-new-public", "");
             set_checkbox(document, "identity-verify-only", false);
             toggle_verify_only_form(document);
@@ -382,6 +389,25 @@ fn delete_selected(document: &Document) {
     }
 }
 
+fn persist_selected_keyid(document: &Document) {
+    if identity_syncing() {
+        return;
+    }
+    let id = selected_id();
+    if id == NEW_IDENTITY_ID {
+        return;
+    }
+    let keyid = input_value(document, "identity-keyid");
+    if let Err(error) = with_roster_mut(|roster| roster.update_keyid(&id, &keyid)) {
+        set_status(document, "identity-status", "err", &error);
+        return;
+    }
+    let sign_id = select_value(document, "sign-identity").unwrap_or_else(current_id);
+    if sign_id == id {
+        sync_sign_keyid(document);
+    }
+}
+
 fn persist_selected_keys(document: &Document) {
     if identity_syncing() {
         return;
@@ -422,6 +448,7 @@ fn refresh_identity_ui(document: &Document) {
     fill_identity_select(document, "verify-identity");
     refresh_identity_select_icons(document);
     refresh_identity_detail(document);
+    sync_sign_keyid(document);
 }
 
 fn refresh_identity_list(document: &Document) {
@@ -527,6 +554,7 @@ fn refresh_identity_detail(document: &Document) {
             title.set_text_content(Some(&identity.display_name()));
         }
         set_select(document, "identity-algorithm", &identity.algorithm);
+        set_input(document, "identity-keyid", &identity.keyid);
         set_input(document, "identity-private", &identity.private_hex);
         set_input(document, "identity-public", &identity.public_hex);
         set_readonly(
@@ -585,6 +613,17 @@ fn fill_identity_select(document: &Document, id: &str) {
         DEFAULT_IDENTITY.to_string()
     };
     select.set_value(&fallback);
+}
+
+fn sync_sign_keyid(document: &Document) {
+    let id = select_value(document, "sign-identity").unwrap_or_else(current_id);
+    let keyid = with_roster(|roster| {
+        roster
+            .get(&id)
+            .map(|identity| identity.keyid.clone())
+            .unwrap_or_default()
+    });
+    set_input(document, "sign-keyid", &keyid);
 }
 
 fn with_roster<T>(f: impl FnOnce(&Roster) -> T) -> T {
@@ -821,6 +860,7 @@ fn adopt_working_identity(document: &Document, id: &str) {
         set_select(document, "sign-identity", &identity.id);
         set_select(document, "verify-identity", &identity.id);
     });
+    sync_sign_keyid(document);
     refresh_identity_select_icons(document);
     highlight_identity_rows(document);
     refresh_identity_detail(document);
@@ -955,15 +995,25 @@ fn run_validate(document: &Document, flash: bool) {
 }
 
 fn copy_validate_to_sign(document: &Document) {
-    set_textarea(
-        document,
-        "sign-payload",
-        &textarea_value(document, "validate-yaml"),
-    );
+    load_sign_payload(document, &textarea_value(document, "validate-yaml"));
+}
+
+fn load_sign_payload(document: &Document, incoming: &str) {
+    let current = textarea_value(document, "sign-payload");
+    set_textarea(document, "sign-payload", incoming);
+    if incoming != current {
+        clear_sign_artifact(document);
+    }
+}
+
+fn clear_sign_artifact(document: &Document) {
+    set_textarea(document, "sign-artifact", "");
+    set_status(document, "sign-status", "", "idle");
 }
 
 fn bind_sign(document: &Document) {
     bind_click(document, "btn-sign", |document| run_sign(document, true));
+    bind_input_event(document, "sign-payload", "input", clear_sign_artifact);
     bind_input_event(document, "sign-form", "change", |document| {
         run_sign(document, false);
     });
@@ -1114,8 +1164,7 @@ fn send_verify_artifact_to_decompose(document: &Document) {
     }
     let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
     set_textarea(document, "decompose-artifact", &artifact);
-    set_select(document, "decompose-form", &form);
-    update_outer_enabled(document);
+    set_decompose_form(document, &form);
     set_hash("decompose");
 }
 
@@ -1130,8 +1179,8 @@ fn send_verify_payload_to_sign(document: &Document) {
         );
         return;
     }
-    set_textarea(document, "sign-payload", &payload);
     set_hash("sign");
+    load_sign_payload(document, &payload);
 }
 
 fn bind_verify(document: &Document) {
@@ -1453,23 +1502,169 @@ fn refresh_decompose_proto(document: &Document, form: &str, artifact: &str, carr
 }
 
 fn bind_form_toggles(document: &Document) {
+    remember_decompose_form(
+        &select_value(document, "decompose-form").unwrap_or_else(|| "yaml".into()),
+    );
+    remember_compose_form(&select_value(document, "compose-form").unwrap_or_else(|| "yaml".into()));
     if let Some(select) = select(document, "decompose-form") {
         let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || {
-            update_outer_enabled(&document);
-            schedule_decompose(&document);
-        });
+        let closure = Closure::<dyn FnMut()>::new(move || on_decompose_form_change(&document));
         let _ = select.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
         closure.forget();
     }
     if let Some(select) = select(document, "compose-form") {
         let document = document.clone();
-        let closure = Closure::<dyn FnMut()>::new(move || update_compose_proto_mode(&document));
+        let closure = Closure::<dyn FnMut()>::new(move || on_compose_form_change(&document));
         let _ = select.add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
         closure.forget();
     }
     update_outer_enabled(document);
     update_compose_proto_mode(document);
+}
+
+fn last_decompose_form() -> String {
+    LAST_DECOMPOSE_FORM.with(|cell| cell.borrow().clone())
+}
+
+fn last_compose_form() -> String {
+    LAST_COMPOSE_FORM.with(|cell| cell.borrow().clone())
+}
+
+fn remember_decompose_form(form: &str) {
+    LAST_DECOMPOSE_FORM.with(|cell| *cell.borrow_mut() = form.to_string());
+}
+
+fn remember_compose_form(form: &str) {
+    LAST_COMPOSE_FORM.with(|cell| *cell.borrow_mut() = form.to_string());
+}
+
+fn set_decompose_form(document: &Document, form: &str) {
+    set_select(document, "decompose-form", form);
+    remember_decompose_form(form);
+    update_outer_enabled(document);
+}
+
+fn set_compose_form(document: &Document, form: &str) {
+    set_select(document, "compose-form", form);
+    remember_compose_form(form);
+    update_compose_proto_mode(document);
+}
+
+fn protobuf_outer_arg(document: &Document) -> Option<String> {
+    select_value(document, "decompose-outer").filter(|value| value != "omit")
+}
+
+fn on_decompose_form_change(document: &Document) {
+    let next = select_value(document, "decompose-form").unwrap_or_else(|| "yaml".into());
+    let prev = last_decompose_form();
+    update_outer_enabled(document);
+    if next == prev {
+        schedule_decompose(document);
+        return;
+    }
+    let artifact = textarea_value(document, "decompose-artifact");
+    if artifact.trim().is_empty() {
+        remember_decompose_form(&next);
+        schedule_decompose(document);
+        return;
+    }
+    let outer = protobuf_outer_arg(document);
+    let direct = ops::decompose(&artifact, &next, outer.as_deref());
+    if direct.status == "ok" {
+        remember_decompose_form(&next);
+        run_decompose(document, false);
+        return;
+    }
+    let transcoded = ops::transcode(&artifact, &prev, &next);
+    if transcoded.status == "success" {
+        set_textarea(document, "decompose-artifact", &transcoded.primary);
+        remember_decompose_form(&next);
+        run_decompose(document, false);
+        return;
+    }
+    remember_decompose_form(&next);
+    run_decompose(document, false);
+}
+
+fn on_compose_form_change(document: &Document) {
+    let next = select_value(document, "compose-form").unwrap_or_else(|| "yaml".into());
+    let prev = last_compose_form();
+    if next == prev {
+        update_compose_proto_mode(document);
+        return;
+    }
+    if prev == "protobuf" {
+        let _ = sync_compose_carrier_wire(document);
+    }
+    let payload = textarea_value(document, "compose-payload");
+    let carrier = textarea_value(document, "compose-carrier");
+    let artifact = textarea_value(document, "compose-artifact");
+    if payload.trim().is_empty() && carrier.trim().is_empty() && artifact.trim().is_empty() {
+        remember_compose_form(&next);
+        update_compose_proto_mode(document);
+        return;
+    }
+
+    // YAML compose concatenates payload + `---` + carrier, so a protobuf
+    // carrier "succeeds" as a YAML scalar. Transcode the envelope instead.
+    if !artifact.trim().is_empty() {
+        let transcoded = ops::transcode(&artifact, &prev, &next);
+        if transcoded.status == "success" {
+            apply_compose_transcode(document, &next, &transcoded);
+            return;
+        }
+    }
+    if !payload.trim().is_empty() || !carrier.trim().is_empty() {
+        let composed = ops::compose(&payload, &carrier, &prev);
+        if composed.status == "success" {
+            let transcoded = ops::transcode(&composed.primary, &prev, &next);
+            if transcoded.status == "success" {
+                apply_compose_transcode(document, &next, &transcoded);
+                return;
+            }
+        }
+        let direct = ops::compose(&payload, &carrier, &next);
+        if direct.status == "success" && signed_envelope_in_form(&direct.primary, &next) {
+            set_textarea(document, "compose-artifact", &direct.primary);
+            remember_compose_form(&next);
+            update_compose_proto_mode(document);
+            refresh_compose_artifact_view(document, &next, &direct.primary);
+            show_result(document, "compose-status", &direct);
+            return;
+        }
+    }
+
+    set_select(document, "compose-form", &prev);
+    update_compose_proto_mode(document);
+    set_status(
+        document,
+        "compose-status",
+        "err",
+        "transcode_error / could_not_switch_form",
+    );
+}
+
+fn apply_compose_transcode(document: &Document, next: &str, transcoded: &OpResult) {
+    set_textarea(document, "compose-artifact", &transcoded.primary);
+    let outer = (next == "protobuf").then_some("signature_strict");
+    let parts = ops::decompose(&transcoded.primary, next, outer);
+    if parts.status == "ok" {
+        set_textarea(document, "compose-payload", &parts.primary);
+        set_textarea(document, "compose-carrier", &parts.extra);
+    }
+    remember_compose_form(next);
+    update_compose_proto_mode(document);
+    refresh_compose_artifact_view(document, next, &transcoded.primary);
+    show_result(document, "compose-status", transcoded);
+}
+
+fn signed_envelope_in_form(artifact: &str, form: &str) -> bool {
+    let other = if form == "protobuf" {
+        "yaml"
+    } else {
+        "protobuf"
+    };
+    ops::transcode(artifact, form, other).status == "success"
 }
 
 fn update_outer_enabled(document: &Document) {
@@ -1549,15 +1744,13 @@ fn copy_artifact_to_verify_and_decompose(document: &Document, artifact: &str, fo
     set_textarea(document, "verify-artifact", artifact);
     set_select(document, "verify-form", form);
     set_textarea(document, "decompose-artifact", artifact);
-    set_select(document, "decompose-form", form);
-    update_outer_enabled(document);
+    set_decompose_form(document, form);
 }
 
 fn copy_parts_to_compose(document: &Document, payload: &str, carrier: &str, form: &str) {
     set_textarea(document, "compose-payload", payload);
     set_textarea(document, "compose-carrier", carrier);
-    set_select(document, "compose-form", form);
-    update_compose_proto_mode(document);
+    set_compose_form(document, form);
 }
 
 fn set_box_state(document: &Document, id: &str, state: &str) {

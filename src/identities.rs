@@ -16,6 +16,7 @@ pub struct Identity {
     pub algorithm: String,
     pub private_hex: String,
     pub public_hex: String,
+    pub keyid: String,
     pub preset: bool,
     pub verify_only: bool,
 }
@@ -50,6 +51,7 @@ impl Roster {
                 algorithm: algorithm.clone(),
                 private_hex: pair.private_hex,
                 public_hex: pair.public_hex,
+                keyid: (*id).to_string(),
                 preset: true,
                 verify_only: false,
             });
@@ -65,8 +67,9 @@ impl Roster {
         self.identities.iter().find(|identity| identity.id == id)
     }
 
-    pub fn add(&mut self, label: &str, algorithm: &str) -> Result<String, String> {
+    pub fn add(&mut self, label: &str, algorithm: &str, keyid: &str) -> Result<String, String> {
         let id = self.prepare_new_id(label)?;
+        let keyid = normalize_keyid(keyid)?;
         let pair = generate_keypair(algorithm)?;
         self.identities.push(Identity {
             id: id.clone(),
@@ -74,14 +77,21 @@ impl Roster {
             algorithm: algorithm.to_string(),
             private_hex: pair.private_hex,
             public_hex: pair.public_hex,
+            keyid,
             preset: false,
             verify_only: false,
         });
         Ok(id)
     }
 
-    pub fn mint_verify_only(&mut self, label: &str, algorithm: &str) -> Result<String, String> {
+    pub fn mint_verify_only(
+        &mut self,
+        label: &str,
+        algorithm: &str,
+        keyid: &str,
+    ) -> Result<String, String> {
         let id = self.prepare_new_id(label)?;
+        let keyid = normalize_keyid(keyid)?;
         let pair = generate_keypair(algorithm)?;
         self.identities.push(Identity {
             id: id.clone(),
@@ -89,6 +99,7 @@ impl Roster {
             algorithm: algorithm.to_string(),
             private_hex: String::new(),
             public_hex: pair.public_hex,
+            keyid,
             preset: false,
             verify_only: true,
         });
@@ -100,15 +111,18 @@ impl Roster {
         label: &str,
         algorithm: &str,
         public_hex: &str,
+        keyid: &str,
     ) -> Result<String, String> {
         let public_hex = canonical_public_key(algorithm, public_hex)?;
         let id = self.prepare_new_id(label)?;
+        let keyid = normalize_keyid(keyid)?;
         self.identities.push(Identity {
             id: id.clone(),
             label: label.trim().to_string(),
             algorithm: algorithm.to_string(),
             private_hex: String::new(),
             public_hex,
+            keyid,
             preset: false,
             verify_only: true,
         });
@@ -185,6 +199,29 @@ impl Roster {
         identity.public_hex = public_hex.to_string();
         Ok(())
     }
+
+    pub fn update_keyid(&mut self, id: &str, keyid: &str) -> Result<(), String> {
+        let keyid = normalize_keyid(keyid)?;
+        let identity = self
+            .identities
+            .iter_mut()
+            .find(|identity| identity.id == id)
+            .ok_or_else(|| format!("unknown identity '{id}'"))?;
+        identity.keyid = keyid;
+        Ok(())
+    }
+}
+
+/// Empty omits `keyid` at sign time. Otherwise 1..=1024 UTF-8 bytes, no CR/LF.
+pub fn normalize_keyid(keyid: &str) -> Result<String, String> {
+    let trimmed = keyid.trim();
+    if trimmed.is_empty() {
+        return Ok(String::new());
+    }
+    if trimmed.len() > 1024 || trimmed.contains(['\r', '\n']) {
+        return Err("keyid must be 1 to 1024 bytes with no CR or LF".into());
+    }
+    Ok(trimmed.to_string())
 }
 
 pub fn assign_preset_algs(rng: &mut impl Rng) -> [String; 3] {
@@ -262,6 +299,7 @@ mod tests {
             let identity = roster.get(id).expect(id);
             assert!(identity.preset);
             assert_eq!(identity.id, id);
+            assert_eq!(identity.keyid, id);
             assert!(!identity.private_hex.is_empty());
             assert!(!identity.public_hex.is_empty());
         }
@@ -284,11 +322,22 @@ mod tests {
     #[test]
     fn add_remint_delete_user_identity() {
         let mut roster = Roster::seed().expect("seed");
-        let id = roster.add("Dave", ED25519_NAME).expect("add");
+        let id = roster.add("Dave", ED25519_NAME, "").expect("add");
         assert_eq!(id, "dave");
         let first = roster.get("dave").expect("dave").clone();
         assert!(!first.preset);
         assert_eq!(first.label, "Dave");
+        assert!(first.keyid.is_empty());
+
+        roster.update_keyid("dave", "dave-key").expect("keyid");
+        assert_eq!(roster.get("dave").unwrap().keyid, "dave-key");
+        roster
+            .update_keyid("alice", "")
+            .expect("clear preset keyid");
+        assert!(roster.get("alice").unwrap().keyid.is_empty());
+        roster
+            .update_keyid("alice", "alice")
+            .expect("restore preset keyid");
 
         roster.remint("dave", P256_NAME).expect("remint");
         let second = roster.get("dave").expect("dave");
@@ -308,19 +357,19 @@ mod tests {
         assert!(roster.remint("alice", ED25519_NAME).is_err());
         assert!(roster.delete("bob").is_err());
         assert!(roster.update_keys("carol", "aa", "bb").is_err());
-        assert!(roster.add("Alice", ED25519_NAME).is_err());
-        assert!(roster.add("ALICE", ED25519_NAME).is_err());
-        assert!(roster.add("   ", ED25519_NAME).is_err());
-        assert!(roster.add("!!!", ED25519_NAME).is_err());
+        assert!(roster.add("Alice", ED25519_NAME, "").is_err());
+        assert!(roster.add("ALICE", ED25519_NAME, "").is_err());
+        assert!(roster.add("   ", ED25519_NAME, "").is_err());
+        assert!(roster.add("!!!", ED25519_NAME, "").is_err());
     }
 
     #[test]
     fn names_are_unique_ignoring_case() {
         let mut roster = Roster::seed().expect("seed");
-        roster.add("Dave", ED25519_NAME).expect("add");
-        assert!(roster.add("dave", P256_NAME).is_err());
-        assert!(roster.add("DAVE", P256_NAME).is_err());
-        assert!(roster.add("Dave", ED25519_NAME).is_err());
+        roster.add("Dave", ED25519_NAME, "").expect("add");
+        assert!(roster.add("dave", P256_NAME, "").is_err());
+        assert!(roster.add("DAVE", P256_NAME, "").is_err());
+        assert!(roster.add("Dave", ED25519_NAME, "").is_err());
     }
 
     #[test]
@@ -329,7 +378,7 @@ mod tests {
         let public = roster.get("alice").unwrap().public_hex.clone();
         let alg = roster.get("alice").unwrap().algorithm.clone();
         let id = roster
-            .add_verify_only("Mallory", &alg, &public)
+            .add_verify_only("Mallory", &alg, &public, "")
             .expect("add verify-only");
         assert_eq!(id, "mallory");
         let mallory = roster.get("mallory").expect("mallory");
@@ -340,22 +389,27 @@ mod tests {
         assert!(roster.remint("mallory", ED25519_NAME).is_err());
         roster.delete("mallory").expect("delete verify-only");
         assert!(roster.get("mallory").is_none());
-        assert!(roster.add_verify_only("Eve", ED25519_NAME, "").is_err());
+        assert!(roster.add_verify_only("Eve", ED25519_NAME, "", "").is_err());
         assert!(
             roster
-                .add_verify_only("Eve", ED25519_NAME, "not-a-key")
+                .add_verify_only("Eve", ED25519_NAME, "not-a-key", "")
                 .is_err()
         );
-        assert!(roster.add_verify_only("Eve", ED25519_NAME, "00").is_err());
+        assert!(
+            roster
+                .add_verify_only("Eve", ED25519_NAME, "00", "")
+                .is_err()
+        );
 
         let minted = roster
-            .mint_verify_only("Trent", ED25519_NAME)
+            .mint_verify_only("Trent", ED25519_NAME, "trent")
             .expect("mint verify-only");
         assert_eq!(minted, "trent");
         let trent = roster.get("trent").expect("trent");
         assert!(trent.verify_only);
         assert!(trent.private_hex.is_empty());
         assert!(!trent.public_hex.is_empty());
+        assert_eq!(trent.keyid, "trent");
         crate::keys::canonical_public_key(ED25519_NAME, &trent.public_hex).expect("conformant");
     }
 
@@ -367,5 +421,9 @@ mod tests {
         assert_eq!(trunc_hex("aabbccddeeff0011"), "aabbccdd…0011");
         assert_eq!(short_alg(ED25519_NAME), "Ed25519");
         assert_eq!(short_alg(P256_NAME), "P-256");
+        assert_eq!(normalize_keyid("  alice  ").unwrap(), "alice");
+        assert_eq!(normalize_keyid("").unwrap(), "");
+        assert!(normalize_keyid("kid\nid").is_err());
+        assert!(normalize_keyid(&"x".repeat(1025)).is_err());
     }
 }
