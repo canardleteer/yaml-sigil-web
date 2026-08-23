@@ -6,9 +6,9 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 use web_sys::{
-    Blob, BlobPropertyBag, CanvasRenderingContext2d, Document, HtmlAnchorElement, HtmlButtonElement,
-    HtmlCanvasElement, HtmlElement, HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement,
-    KeyboardEvent, Url,
+    Blob, BlobPropertyBag, CanvasRenderingContext2d, Document, HtmlAnchorElement,
+    HtmlButtonElement, HtmlCanvasElement, HtmlElement, HtmlInputElement, HtmlSelectElement,
+    HtmlTextAreaElement, KeyboardEvent, Url,
 };
 
 use crate::identicon;
@@ -1231,6 +1231,7 @@ fn bind_verify(document: &Document) {
 
 fn schedule_verify(document: &Document) {
     refresh_verify_convert(document);
+    refresh_qr_buttons(document);
     set_box_state(document, "verify-payload-box", "pending");
     let document = document.clone();
     debounce(&VERIFY_TIMER, LIVE_DELAY_MS, move || {
@@ -1275,6 +1276,7 @@ fn run_verify(document: &Document, flash: bool) {
             set_box_state(document, "verify-payload-box", "");
             set_status(document, "verify-status", "", "idle");
         }
+        refresh_qr_buttons(document);
         return;
     }
     let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
@@ -1288,6 +1290,7 @@ fn run_verify(document: &Document, flash: bool) {
             "err",
             &format!("unknown identity '{id}'"),
         );
+        refresh_qr_buttons(document);
         return;
     };
     let result = ops::verify(&artifact, &form, &identity.algorithm, &identity.public_hex);
@@ -1315,6 +1318,7 @@ fn run_verify(document: &Document, flash: bool) {
     if flash {
         play_flash(document, "verify-flash", ok);
     }
+    refresh_qr_buttons(document);
 }
 
 fn matching_other_identity(artifact: &str, form: &str, skip_id: &str) -> Option<String> {
@@ -1778,6 +1782,16 @@ fn bind_qr(document: &Document) {
             open_qr_modal(document, &text);
         }
     });
+    bind_click(document, "btn-verify-artifact-qr", |document| {
+        if let Some(text) = verify_artifact_qr_payload(document) {
+            open_qr_modal(document, &text);
+        }
+    });
+    bind_click(document, "btn-verify-payload-qr", |document| {
+        if let Some(text) = verify_payload_qr_payload(document) {
+            open_qr_modal(document, &text);
+        }
+    });
     bind_click(document, "btn-qr-close", close_qr_modal);
     bind_click(document, "qr-backdrop", close_qr_modal);
     bind_click(document, "btn-qr-png", download_qr_png);
@@ -1827,6 +1841,19 @@ fn compose_qr_payload(document: &Document) -> Option<String> {
     yaml_qr_ready(&current, &snapshot).then_some(current)
 }
 
+fn live_qr_payload(document: &Document, id: &str) -> Option<String> {
+    let current = textarea_value(document, id);
+    (!current.trim().is_empty() && qr::can_encode(&current)).then_some(current)
+}
+
+fn verify_artifact_qr_payload(document: &Document) -> Option<String> {
+    live_qr_payload(document, "verify-artifact")
+}
+
+fn verify_payload_qr_payload(document: &Document) -> Option<String> {
+    live_qr_payload(document, "verify-payload")
+}
+
 fn refresh_qr_buttons(document: &Document) {
     set_button_disabled(
         document,
@@ -1838,6 +1865,16 @@ fn refresh_qr_buttons(document: &Document) {
         document,
         "btn-compose-qr",
         compose_qr_payload(document).is_none(),
+    );
+    set_button_disabled(
+        document,
+        "btn-verify-artifact-qr",
+        verify_artifact_qr_payload(document).is_none(),
+    );
+    set_button_disabled(
+        document,
+        "btn-verify-payload-qr",
+        verify_payload_qr_payload(document).is_none(),
     );
 }
 
@@ -1934,33 +1971,36 @@ fn trigger_download(document: &Document, href: &str, filename: &str) {
 }
 
 fn qr_png_data_url(document: &Document, image: &QrImage) -> Result<String, JsValue> {
+    const PNG_SIZE: u32 = 1024;
     const QUIET: u32 = 4;
     let modules = u32::try_from(image.width).unwrap_or(0);
     let dim = modules.saturating_add(QUIET.saturating_mul(2));
     if dim == 0 || image.modules.len() != image.width * image.width {
         return Err(JsValue::from_str("invalid qr matrix"));
     }
-    let scale = (512 / dim).max(4);
-    let size = dim.saturating_mul(scale);
+    let scale = (PNG_SIZE / dim).max(1);
+    let drawn = dim.saturating_mul(scale);
+    let origin = (PNG_SIZE - drawn) / 2;
     let canvas = document
         .create_element("canvas")?
         .dyn_into::<HtmlCanvasElement>()?;
-    canvas.set_width(size);
-    canvas.set_height(size);
+    canvas.set_width(PNG_SIZE);
+    canvas.set_height(PNG_SIZE);
     let context = canvas
         .get_context("2d")?
         .ok_or_else(|| JsValue::from_str("2d context"))?
         .dyn_into::<CanvasRenderingContext2d>()?;
+    context.set_image_smoothing_enabled(false);
     context.set_fill_style_str("#ffffff");
-    context.fill_rect(0.0, 0.0, f64::from(size), f64::from(size));
+    context.fill_rect(0.0, 0.0, f64::from(PNG_SIZE), f64::from(PNG_SIZE));
     context.set_fill_style_str("#000000");
     for y in 0..modules {
         for x in 0..modules {
             let index = (y as usize) * image.width + (x as usize);
             if image.modules.get(index).copied().unwrap_or(false) {
                 context.fill_rect(
-                    f64::from((x + QUIET) * scale),
-                    f64::from((y + QUIET) * scale),
+                    f64::from(origin + (x + QUIET) * scale),
+                    f64::from(origin + (y + QUIET) * scale),
                     f64::from(scale),
                     f64::from(scale),
                 );
@@ -2042,6 +2082,7 @@ fn copy_artifact_to_verify_and_decompose(document: &Document, artifact: &str, fo
     set_select(document, "verify-form", form);
     set_textarea(document, "decompose-artifact", artifact);
     set_decompose_form(document, form);
+    refresh_qr_buttons(document);
 }
 
 fn copy_parts_to_compose(document: &Document, payload: &str, carrier: &str, form: &str) {

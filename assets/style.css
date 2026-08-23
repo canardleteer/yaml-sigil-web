@@ -307,6 +307,10 @@ footer {
   flex: 0 0 auto;
 }
 
+#validate-yaml-box .panel-actions {
+  justify-content: flex-end;
+}
+
 label {
   display: flex;
   flex-direction: column;

@@ -139,13 +139,15 @@
         </button>
         </div>
         <button type="button" id="btn-validate" class="primary">Parse YAML</button>
-        <button type="button" id="btn-send-sign">Send to sign</button>
-        <button type="button" id="btn-validate-qr" disabled>QR Code</button>
       </header>
       <div class="window-body">
         <article class="panel grow" id="validate-yaml-box">
           <h2>YAML source</h2>
           <textarea id="validate-yaml" spellcheck="false"></textarea>
+          <div class="panel-actions">
+            <button type="button" id="btn-send-sign">Send to sign</button>
+            <button type="button" id="btn-validate-qr" disabled>QR Code</button>
+          </div>
           <div class="result-flash" id="validate-flash" aria-hidden="true">
             <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
               <circle cx="60" cy="60" r="50"></circle>
@@ -362,6 +364,7 @@
             <textarea id="verify-artifact" spellcheck="false"></textarea>
             <div class="panel-actions">
               <button type="button" id="btn-send-verify-decompose">Send to decompose</button>
+              <button type="button" id="btn-verify-artifact-qr" disabled>QR Code</button>
             </div>
           </article>
           <article class="panel grow" id="verify-payload-box">
@@ -369,6 +372,7 @@
             <textarea id="verify-payload" spellcheck="false" readonly></textarea>
             <div class="panel-actions">
               <button type="button" id="btn-send-verify-sign">Send to sign</button>
+              <button type="button" id="btn-verify-payload-qr" disabled>QR Code</button>
             </div>
             <div class="result-flash" id="verify-flash" aria-hidden="true">
               <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
