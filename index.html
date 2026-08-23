@@ -271,8 +271,6 @@
         </button>
         </div>
         <button type="button" id="btn-sign" class="primary">Sign</button>
-        <button type="button" id="btn-send-verify">Send to verify</button>
-        <button type="button" id="btn-send-decompose">Send to decompose</button>
       </header>
       <div class="window-body sign-body">
         <aside class="rail">
@@ -321,7 +319,13 @@
             </svg>
           </div>
         </div>
-        <p id="sign-status" class="status span">idle</p>
+        <div class="window-foot span">
+          <p id="sign-status" class="status">idle</p>
+          <div class="send-row">
+            <button type="button" id="btn-send-verify">Send to verify</button>
+            <button type="button" id="btn-send-decompose">Send to decompose</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -403,8 +407,6 @@
         </button>
         </div>
         <button type="button" id="btn-compose" class="primary">Compose</button>
-        <button type="button" id="btn-send-compose-verify">Send to verify</button>
-        <button type="button" id="btn-send-compose-decompose">Send to decompose</button>
       </header>
       <div class="window-body compose-body" id="compose-body">
         <div class="split">
@@ -503,7 +505,13 @@
             </svg>
           </div>
         </article>
-        <p id="compose-status" class="status">idle</p>
+        <div class="window-foot">
+          <p id="compose-status" class="status">idle</p>
+          <div class="send-row">
+            <button type="button" id="btn-send-compose-verify">Send to verify</button>
+            <button type="button" id="btn-send-compose-decompose">Send to decompose</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -522,7 +530,6 @@
         </button>
         </div>
         <button type="button" id="btn-decompose" class="primary">Decompose</button>
-        <button type="button" id="btn-send-compose">Send to compose</button>
       </header>
       <div class="window-body decompose-body" id="decompose-body">
         <article class="panel grow" id="decompose-artifact-box">
@@ -597,7 +604,12 @@
             </svg>
           </div>
         </div>
-        <p id="decompose-status" class="status">idle</p>
+        <div class="window-foot">
+          <p id="decompose-status" class="status">idle</p>
+          <div class="send-row">
+            <button type="button" id="btn-send-compose">Send to compose</button>
+          </div>
+        </div>
       </div>
     </section>
 

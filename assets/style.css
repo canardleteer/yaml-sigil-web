@@ -897,6 +897,27 @@ label.check input {
   grid-column: 1 / -1;
 }
 
+.window-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.75rem;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.window-foot .status {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.send-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
 .sign-body > .result-stage {
   min-width: 0;
   min-height: 0;
