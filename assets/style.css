@@ -299,28 +299,12 @@ footer {
   min-width: 0;
 }
 
-.panel-foot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 0.75rem;
-  margin-top: 0.55rem;
-  flex: 0 0 auto;
-}
-
 .panel-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
   margin-top: 0.55rem;
   flex: 0 0 auto;
-}
-
-.toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem 1rem;
-  align-items: end;
-  margin: 0.4rem 0 0.85rem;
 }
 
 label {
@@ -815,11 +799,6 @@ label.check input {
   color: #6ea0ff;
 }
 
-.bar-field {
-  flex: 1 1 10rem;
-  min-width: 0;
-}
-
 .window-body {
   display: flex;
   flex-direction: column;
@@ -1225,11 +1204,6 @@ code {
   .current-id {
     font-size: 0.68rem;
     max-width: 58%;
-  }
-
-  .bar-field {
-    flex: 1 1 100%;
-    width: 100%;
   }
 
   .split,
