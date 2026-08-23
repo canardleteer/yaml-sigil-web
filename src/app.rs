@@ -11,6 +11,7 @@ use web_sys::{
     HtmlTextAreaElement, KeyboardEvent, Url,
 };
 
+use crate::highlight;
 use crate::identicon;
 use crate::identities::{Roster, short_alg, trunc_hex};
 use crate::ops::{self, ED25519_NAME, OpResult};
@@ -36,6 +37,23 @@ const WINDOWS: [&str; 6] = [
 const LIVE_DELAY_MS: i32 = 90;
 const DEFAULT_IDENTITY: &str = "alice";
 const NEW_IDENTITY_ID: &str = "__new__";
+
+const YAML_ALWAYS: [&str; 6] = [
+    "validate-yaml",
+    "sign-payload",
+    "verify-payload",
+    "compose-payload",
+    "decompose-payload",
+    "compose-artifact-payload",
+];
+const YAML_WHEN_FORM: [(&str, &str); 6] = [
+    ("sign-artifact", "sign-form"),
+    ("verify-artifact", "verify-form"),
+    ("compose-carrier", "compose-form"),
+    ("compose-artifact", "compose-form"),
+    ("decompose-artifact", "decompose-form"),
+    ("decompose-carrier", "decompose-form"),
+];
 
 thread_local! {
     static VERIFY_TIMER: Cell<i32> = const { Cell::new(-1) };
@@ -71,13 +89,11 @@ pub fn boot() {
     bind_form_toggles(&document);
     bind_current_id_menu(&document);
     bind_qr(&document);
+    bind_yaml_editors(&document);
 
-    if let Some(yaml) = textarea(&document, "validate-yaml") {
-        yaml.set_value(SAMPLE_YAML);
-    }
-    if let Some(payload) = textarea(&document, "sign-payload") {
-        payload.set_value(SAMPLE_YAML);
-    }
+    set_textarea(&document, "validate-yaml", SAMPLE_YAML);
+    set_textarea(&document, "sign-payload", SAMPLE_YAML);
+    refresh_yaml_modes(&document);
 
     seed_roster(&document);
     open_from_hash(&document);
@@ -1043,6 +1059,7 @@ fn bind_sign(document: &Document) {
 }
 
 fn run_sign(document: &Document, flash: bool) {
+    refresh_yaml_modes(document);
     let payload = textarea_value(document, "sign-payload");
     let id = select_value(document, "sign-identity").unwrap_or_else(|| DEFAULT_IDENTITY.into());
     let Some(identity) = with_roster(|roster| roster.get(&id).cloned()) else {
@@ -1133,6 +1150,9 @@ fn bind_send(document: &Document) {
 }
 
 fn send_from_validate(document: &Document) {
+    if !validate_yaml_ready(document) {
+        return;
+    }
     copy_validate_to_sign(document);
     set_hash("sign");
 }
@@ -1232,6 +1252,7 @@ fn bind_verify(document: &Document) {
 fn schedule_verify(document: &Document) {
     refresh_verify_convert(document);
     refresh_qr_buttons(document);
+    refresh_yaml_modes(document);
     set_box_state(document, "verify-payload-box", "pending");
     let document = document.clone();
     debounce(&VERIFY_TIMER, LIVE_DELAY_MS, move || {
@@ -1265,6 +1286,7 @@ fn convert_verify_artifact(document: &Document) {
 fn run_verify(document: &Document, flash: bool) {
     cancel_timer(&VERIFY_TIMER);
     refresh_verify_convert(document);
+    refresh_yaml_modes(document);
     let artifact = textarea_value(document, "verify-artifact");
     if artifact.trim().is_empty() {
         set_textarea(document, "verify-payload", "");
@@ -1617,6 +1639,7 @@ fn set_decompose_form(document: &Document, form: &str) {
     set_select(document, "decompose-form", form);
     remember_decompose_form(form);
     update_outer_enabled(document);
+    refresh_yaml_modes(document);
 }
 
 fn set_compose_form(document: &Document, form: &str) {
@@ -1811,8 +1834,18 @@ fn remember_compose_yaml(text: &str) {
     LAST_COMPOSE_YAML.with(|cell| *cell.borrow_mut() = text.to_string());
 }
 
+fn yaml_snapshot_ready(current: &str, snapshot: &str) -> bool {
+    !current.is_empty() && current == snapshot
+}
+
 fn yaml_qr_ready(current: &str, snapshot: &str) -> bool {
-    !current.is_empty() && current == snapshot && qr::can_encode(current)
+    yaml_snapshot_ready(current, snapshot) && qr::can_encode(current)
+}
+
+fn validate_yaml_ready(document: &Document) -> bool {
+    let current = textarea_value(document, "validate-yaml");
+    let snapshot = LAST_VALIDATE_YAML.with(|cell| cell.borrow().clone());
+    yaml_snapshot_ready(&current, &snapshot)
 }
 
 fn validate_qr_payload(document: &Document) -> Option<String> {
@@ -1855,6 +1888,7 @@ fn verify_payload_qr_payload(document: &Document) -> Option<String> {
 }
 
 fn refresh_qr_buttons(document: &Document) {
+    set_button_disabled(document, "btn-send-sign", !validate_yaml_ready(document));
     set_button_disabled(
         document,
         "btn-validate-qr",
@@ -2178,6 +2212,7 @@ fn set_proto_mode(document: &Document, body_id: &str, proto: bool) {
     if proto {
         let _ = el.class_list().add_1("proto-mode");
     }
+    refresh_yaml_modes(document);
 }
 
 fn fill_artifact_view(document: &Document, prefix: &str, fields: Option<&ArtifactFields>) {
@@ -2219,6 +2254,89 @@ fn fill_signature_fields(
     });
 }
 
+fn bind_yaml_editors(document: &Document) {
+    for id in yaml_editor_ids() {
+        bind_yaml_editor(document, id);
+    }
+}
+
+fn yaml_editor_ids() -> impl Iterator<Item = &'static str> {
+    YAML_ALWAYS
+        .into_iter()
+        .chain(YAML_WHEN_FORM.into_iter().map(|(id, _)| id))
+}
+
+fn bind_yaml_editor(document: &Document, id: &str) {
+    let Some(el) = textarea(document, id) else {
+        return;
+    };
+    let document_input = document.clone();
+    let id_input = id.to_string();
+    let on_input = Closure::<dyn FnMut()>::new(move || paint_yaml(&document_input, &id_input));
+    let _ = el.add_event_listener_with_callback("input", on_input.as_ref().unchecked_ref());
+    on_input.forget();
+
+    let document_scroll = document.clone();
+    let id_scroll = id.to_string();
+    let on_scroll =
+        Closure::<dyn FnMut()>::new(move || sync_yaml_scroll(&document_scroll, &id_scroll));
+    let _ = el.add_event_listener_with_callback("scroll", on_scroll.as_ref().unchecked_ref());
+    on_scroll.forget();
+}
+
+fn paint_yaml(document: &Document, id: &str) {
+    let Some(hl) = document.get_element_by_id(&format!("{id}-hl")) else {
+        return;
+    };
+    if hl
+        .parent_element()
+        .is_some_and(|parent| parent.class_list().contains("is-plain"))
+    {
+        hl.set_inner_html("");
+        return;
+    }
+    hl.set_inner_html(&highlight::html(&textarea_value(document, id)));
+    sync_yaml_scroll(document, id);
+}
+
+fn sync_yaml_scroll(document: &Document, id: &str) {
+    let Some(area) = textarea(document, id) else {
+        return;
+    };
+    let Some(hl) = document
+        .get_element_by_id(&format!("{id}-hl"))
+        .and_then(|el| el.dyn_into::<HtmlElement>().ok())
+    else {
+        return;
+    };
+    hl.set_scroll_top(area.scroll_top());
+    hl.set_scroll_left(area.scroll_left());
+}
+
+fn set_yaml_plain(document: &Document, id: &str, plain: bool) {
+    let Some(hl) = document.get_element_by_id(&format!("{id}-hl")) else {
+        return;
+    };
+    let Some(editor) = hl.parent_element() else {
+        return;
+    };
+    let _ = editor.class_list().remove_1("is-plain");
+    if plain {
+        let _ = editor.class_list().add_1("is-plain");
+    }
+    paint_yaml(document, id);
+}
+
+fn refresh_yaml_modes(document: &Document) {
+    for id in YAML_ALWAYS {
+        set_yaml_plain(document, id, false);
+    }
+    for (id, form_id) in YAML_WHEN_FORM {
+        let plain = select_value(document, form_id).as_deref() != Some("yaml");
+        set_yaml_plain(document, id, plain);
+    }
+}
+
 fn textarea(document: &Document, id: &str) -> Option<HtmlTextAreaElement> {
     document
         .get_element_by_id(id)?
@@ -2235,6 +2353,7 @@ fn textarea_value(document: &Document, id: &str) -> String {
 fn set_textarea(document: &Document, id: &str, value: &str) {
     if let Some(el) = textarea(document, id) {
         el.set_value(value);
+        paint_yaml(document, id);
     }
 }
 

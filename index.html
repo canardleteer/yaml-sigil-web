@@ -143,9 +143,12 @@
       <div class="window-body">
         <article class="panel grow" id="validate-yaml-box">
           <h2>YAML source</h2>
-          <textarea id="validate-yaml" spellcheck="false"></textarea>
+          <div class="yaml-editor">
+            <pre class="yaml-hl" id="validate-yaml-hl" aria-hidden="true"></pre>
+            <textarea id="validate-yaml" spellcheck="false"></textarea>
+          </div>
           <div class="panel-actions">
-            <button type="button" id="btn-send-sign">Send to sign</button>
+            <button type="button" id="btn-send-sign" disabled>Send to sign</button>
             <button type="button" id="btn-validate-qr" disabled>QR Code</button>
           </div>
           <div class="result-flash" id="validate-flash" aria-hidden="true">
@@ -302,7 +305,10 @@
           <div class="work split">
             <article class="panel grow">
               <h2>Payload (YAML)</h2>
-              <textarea id="sign-payload" spellcheck="false"></textarea>
+              <div class="yaml-editor">
+                <pre class="yaml-hl" id="sign-payload-hl" aria-hidden="true"></pre>
+                <textarea id="sign-payload" spellcheck="false"></textarea>
+              </div>
             </article>
             <article class="panel grow">
               <div class="panel-head">
@@ -315,7 +321,10 @@
                   </select>
                 </label>
               </div>
-              <textarea id="sign-artifact" spellcheck="false" readonly></textarea>
+              <div class="yaml-editor">
+                <pre class="yaml-hl" id="sign-artifact-hl" aria-hidden="true"></pre>
+                <textarea id="sign-artifact" spellcheck="false" readonly></textarea>
+              </div>
             </article>
           </div>
           <div class="result-flash" id="sign-flash" aria-hidden="true">
@@ -361,7 +370,10 @@
         <div class="work stacked">
           <article class="panel grow">
             <h2>Artifact</h2>
-            <textarea id="verify-artifact" spellcheck="false"></textarea>
+            <div class="yaml-editor">
+              <pre class="yaml-hl" id="verify-artifact-hl" aria-hidden="true"></pre>
+              <textarea id="verify-artifact" spellcheck="false"></textarea>
+            </div>
             <div class="panel-actions">
               <button type="button" id="btn-send-verify-decompose">Send to decompose</button>
               <button type="button" id="btn-verify-artifact-qr" disabled>QR Code</button>
@@ -369,7 +381,10 @@
           </article>
           <article class="panel grow" id="verify-payload-box">
             <h2>Authenticated payload</h2>
-            <textarea id="verify-payload" spellcheck="false" readonly></textarea>
+            <div class="yaml-editor">
+              <pre class="yaml-hl" id="verify-payload-hl" aria-hidden="true"></pre>
+              <textarea id="verify-payload" spellcheck="false" readonly></textarea>
+            </div>
             <div class="panel-actions">
               <button type="button" id="btn-send-verify-sign">Send to sign</button>
               <button type="button" id="btn-verify-payload-qr" disabled>QR Code</button>
@@ -427,11 +442,17 @@
         <div class="split">
           <article class="panel grow">
             <h2>Payload</h2>
-            <textarea id="compose-payload" spellcheck="false"></textarea>
+            <div class="yaml-editor">
+              <pre class="yaml-hl" id="compose-payload-hl" aria-hidden="true"></pre>
+              <textarea id="compose-payload" spellcheck="false"></textarea>
+            </div>
           </article>
           <article class="panel grow" id="compose-carrier-box">
             <h2>Signature carrier</h2>
-            <textarea id="compose-carrier" class="hide-in-proto" spellcheck="false"></textarea>
+            <div class="yaml-editor hide-in-proto">
+              <pre class="yaml-hl" id="compose-carrier-hl" aria-hidden="true"></pre>
+              <textarea id="compose-carrier" spellcheck="false"></textarea>
+            </div>
             <div class="proto-form" id="compose-carrier-form">
               <p class="proto-type">YamlSigilSignature</p>
               <label>
@@ -482,12 +503,18 @@
         </article>
         <article class="panel grow" id="compose-artifact-box">
           <h2>Artifact</h2>
-          <textarea id="compose-artifact" class="hide-in-proto" spellcheck="false" readonly></textarea>
+          <div class="yaml-editor hide-in-proto">
+            <pre class="yaml-hl" id="compose-artifact-hl" aria-hidden="true"></pre>
+            <textarea id="compose-artifact" spellcheck="false" readonly></textarea>
+          </div>
           <div class="proto-form" id="compose-artifact-form">
             <p class="proto-type">SignedYamlArtifact</p>
             <label class="grow-field">
               payload
-              <textarea id="compose-artifact-payload" spellcheck="false" readonly></textarea>
+              <div class="yaml-editor">
+                <pre class="yaml-hl" id="compose-artifact-payload-hl" aria-hidden="true"></pre>
+                <textarea id="compose-artifact-payload" spellcheck="false" readonly></textarea>
+              </div>
             </label>
             <p class="proto-type">signature · YamlSigilSignature</p>
             <label>
@@ -550,7 +577,10 @@
       <div class="window-body decompose-body" id="decompose-body">
         <article class="panel grow" id="decompose-artifact-box">
           <h2>Artifact</h2>
-          <textarea id="decompose-artifact" spellcheck="false"></textarea>
+          <div class="yaml-editor">
+            <pre class="yaml-hl" id="decompose-artifact-hl" aria-hidden="true"></pre>
+            <textarea id="decompose-artifact" spellcheck="false"></textarea>
+          </div>
           <svg class="proto-fail" viewBox="0 0 120 120" fill="none" aria-hidden="true">
             <circle cx="60" cy="60" r="50"></circle>
             <path d="M40 40 L80 80"></path>
@@ -581,11 +611,17 @@
           <div class="split">
             <article class="panel grow" id="decompose-payload-box">
               <h2>Payload</h2>
-              <textarea id="decompose-payload" spellcheck="false" readonly></textarea>
+              <div class="yaml-editor">
+                <pre class="yaml-hl" id="decompose-payload-hl" aria-hidden="true"></pre>
+                <textarea id="decompose-payload" spellcheck="false" readonly></textarea>
+              </div>
             </article>
             <article class="panel grow" id="decompose-carrier-box">
               <h2>Signature carrier</h2>
-              <textarea id="decompose-carrier" class="hide-in-proto" spellcheck="false" readonly></textarea>
+              <div class="yaml-editor hide-in-proto">
+                <pre class="yaml-hl" id="decompose-carrier-hl" aria-hidden="true"></pre>
+                <textarea id="decompose-carrier" spellcheck="false" readonly></textarea>
+              </div>
               <div class="proto-form" id="decompose-carrier-form">
                 <p class="proto-type">YamlSigilSignature</p>
                 <label>
