@@ -1,6 +1,6 @@
 //! DOM wiring for the playground shell.
 
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
@@ -8,7 +8,7 @@ use web_sys::{
     Document, HtmlButtonElement, HtmlInputElement, HtmlSelectElement, HtmlTextAreaElement,
 };
 
-use crate::keys::generate_keypair;
+use crate::identities::{Roster, short_alg, trunc_hex};
 use crate::ops::{self, ED25519_NAME, OpResult};
 use crate::proto::{self, ArtifactFields, SignatureFields};
 
@@ -20,8 +20,17 @@ stores:
   - lamp oil
 "#;
 
-const WINDOWS: [&str; 5] = ["validate", "sign", "verify", "compose", "decompose"];
+const WINDOWS: [&str; 6] = [
+    "validate",
+    "identity",
+    "sign",
+    "verify",
+    "compose",
+    "decompose",
+];
 const LIVE_DELAY_MS: i32 = 90;
+const DEFAULT_IDENTITY: &str = "alice";
+const NEW_IDENTITY_ID: &str = "__new__";
 
 thread_local! {
     static VERIFY_TIMER: Cell<i32> = const { Cell::new(-1) };
@@ -29,6 +38,10 @@ thread_local! {
     static VALIDATE_TIMER: Cell<i32> = const { Cell::new(-1) };
     static COMPOSE_CARRIER_TIMER: Cell<i32> = const { Cell::new(-1) };
     static PROTO_SYNCING: Cell<bool> = const { Cell::new(false) };
+    static IDENTITY_SYNCING: Cell<bool> = const { Cell::new(false) };
+    static ROSTER: RefCell<Roster> = RefCell::new(Roster::default());
+    static SELECTED_ID: RefCell<String> = RefCell::new(NEW_IDENTITY_ID.to_string());
+    static LAST_CONTENT_WINDOW: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
 pub fn boot() {
@@ -37,7 +50,7 @@ pub fn boot() {
     };
 
     bind_windows(&document);
-    bind_generate(&document);
+    bind_identity(&document);
     bind_validate(&document);
     bind_sign(&document);
     bind_send(&document);
@@ -53,7 +66,7 @@ pub fn boot() {
         payload.set_value(SAMPLE_YAML);
     }
 
-    mint_keys(&document);
+    seed_roster(&document);
     open_from_hash(&document);
 }
 
@@ -161,6 +174,9 @@ fn show_window(document: &Document, name: &str) {
         copy_validate_to_sign(document);
     }
     if name == "verify" {
+        if last_content_window() == "sign" {
+            copy_sign_identity_to_verify(document);
+        }
         schedule_verify(document);
     }
     if name == "compose" {
@@ -169,6 +185,7 @@ fn show_window(document: &Document, name: &str) {
     if name == "decompose" {
         schedule_decompose(document);
     }
+    set_last_content_window(name);
 }
 
 fn set_window_hidden(document: &Document, name: &str, hidden: bool) {
@@ -189,81 +206,335 @@ fn set_window_hidden(document: &Document, name: &str, hidden: bool) {
     }
 }
 
-fn bind_generate(document: &Document) {
-    for id in ["btn-mint-sign", "btn-mint-verify"] {
-        if let Some(button) = button(document, id) {
-            let document = document.clone();
-            let closure = Closure::<dyn FnMut()>::new(move || mint_keys(&document));
-            let _ =
-                button.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
-            closure.forget();
+fn seed_roster(document: &Document) {
+    match Roster::seed() {
+        Ok(roster) => {
+            with_roster_mut(|slot| *slot = roster);
+            set_selected_id(NEW_IDENTITY_ID);
+            refresh_identity_ui(document);
+            set_status(document, "identity-status", "", "idle");
         }
-    }
-    for id in ["sign-algorithm", "verify-algorithm"] {
-        if let Some(algorithm) = select(document, id) {
-            let document = document.clone();
-            let source = id.to_string();
-            let closure = Closure::<dyn FnMut()>::new(move || {
-                if let Some(value) = select_value(&document, &source) {
-                    set_select(&document, "sign-algorithm", &value);
-                    set_select(&document, "verify-algorithm", &value);
-                }
-                mint_keys(&document);
-            });
-            let _ = algorithm
-                .add_event_listener_with_callback("change", closure.as_ref().unchecked_ref());
-            closure.forget();
-        }
+        Err(error) => set_status(document, "identity-status", "err", &error),
     }
 }
 
-fn mint_keys(document: &Document) {
-    let algorithm = select_value(document, "sign-algorithm")
-        .or_else(|| select_value(document, "verify-algorithm"))
-        .unwrap_or_else(|| ED25519_NAME.into());
-    match generate_keypair(&algorithm) {
-        Ok(pair) => {
-            apply_keypair(document, &algorithm, &pair.private_hex, &pair.public_hex);
+fn bind_identity(document: &Document) {
+    if let Some(list) = document.get_element_by_id("identity-list") {
+        let document = document.clone();
+        let closure = Closure::<dyn FnMut(web_sys::Event)>::new(move |event: web_sys::Event| {
+            let Some(target) = event.target() else {
+                return;
+            };
+            let Ok(el) = target.dyn_into::<web_sys::Element>() else {
+                return;
+            };
+            let Some(row) = el.closest("[data-identity-id]").ok().flatten() else {
+                return;
+            };
+            let Some(id) = row.get_attribute("data-identity-id") else {
+                return;
+            };
+            set_selected_id(&id);
+            refresh_identity_detail(&document);
+            highlight_identity_rows(&document);
+        });
+        let _ = list.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
+        closure.forget();
+    }
+    for id in ["btn-identity-add", "btn-identity-add-bar"] {
+        if let Some(btn) = button(document, id) {
+            let document = document.clone();
+            let closure = Closure::<dyn FnMut()>::new(move || add_identity(&document));
+            let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
+            closure.forget();
+        }
+    }
+    if let Some(btn) = button(document, "btn-identity-remint") {
+        let document = document.clone();
+        let closure = Closure::<dyn FnMut()>::new(move || remint_selected(&document));
+        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
+        closure.forget();
+    }
+    if let Some(btn) = button(document, "btn-identity-delete") {
+        let document = document.clone();
+        let closure = Closure::<dyn FnMut()>::new(move || delete_selected(&document));
+        let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
+        closure.forget();
+    }
+    for id in ["identity-private", "identity-public"] {
+        bind_input_event(document, id, "input", persist_selected_keys);
+    }
+}
+
+fn add_identity(document: &Document) {
+    let label = input_value(document, "identity-new-name");
+    let algorithm =
+        select_value(document, "identity-new-algorithm").unwrap_or_else(|| ED25519_NAME.into());
+    match with_roster_mut(|roster| roster.add(&label, &algorithm)) {
+        Ok(id) => {
+            set_input(document, "identity-new-name", "");
+            set_selected_id(&id);
+            refresh_identity_ui(document);
             set_status(
                 document,
-                "key-status",
+                "identity-status",
                 "ok",
-                "Minted a fresh ephemeral pair. Reload or generate again to discard it.",
+                &format!("Minted {id} for this session."),
+            );
+        }
+        Err(error) => set_status(document, "identity-status", "err", &error),
+    }
+}
+
+fn remint_selected(document: &Document) {
+    let id = selected_id();
+    let algorithm =
+        select_value(document, "identity-algorithm").unwrap_or_else(|| ED25519_NAME.into());
+    match with_roster_mut(|roster| roster.remint(&id, &algorithm)) {
+        Ok(()) => {
+            refresh_identity_ui(document);
+            set_status(
+                document,
+                "identity-status",
+                "ok",
+                &format!("Reminted {id}."),
             );
             if is_open(document, "verify") {
                 schedule_verify(document);
             }
         }
-        Err(error) => set_status(document, "key-status", "err", &error),
+        Err(error) => set_status(document, "identity-status", "err", &error),
     }
 }
 
-fn apply_keypair(document: &Document, algorithm: &str, private_hex: &str, public_hex: &str) {
-    set_select(document, "sign-algorithm", algorithm);
-    set_select(document, "verify-algorithm", algorithm);
-    set_input(document, "key-private", private_hex);
-    set_input(document, "verify-private", private_hex);
-    set_input(document, "sign-public", public_hex);
-    set_input(document, "key-public", public_hex);
+fn delete_selected(document: &Document) {
+    let id = selected_id();
+    match with_roster_mut(|roster| roster.delete(&id)) {
+        Ok(()) => {
+            if selected_id() == id {
+                set_selected_id(NEW_IDENTITY_ID);
+            }
+            fallback_select(document, "sign-identity", &id);
+            fallback_select(document, "verify-identity", &id);
+            refresh_identity_ui(document);
+            set_status(document, "identity-status", "ok", &format!("Removed {id}."));
+            if is_open(document, "verify") {
+                schedule_verify(document);
+            }
+        }
+        Err(error) => set_status(document, "identity-status", "err", &error),
+    }
 }
 
-fn carry_keys(document: &Document) {
-    let algorithm = select_value(document, "sign-algorithm")
-        .or_else(|| select_value(document, "verify-algorithm"))
-        .unwrap_or_else(|| ED25519_NAME.into());
-    let private = first_filled_input(document, &["key-private", "verify-private"]);
-    let public = first_filled_input(document, &["sign-public", "key-public"]);
-    apply_keypair(document, &algorithm, &private, &public);
+fn persist_selected_keys(document: &Document) {
+    if identity_syncing() {
+        return;
+    }
+    let id = selected_id();
+    if id == NEW_IDENTITY_ID {
+        return;
+    }
+    let private = input_value(document, "identity-private");
+    let public = input_value(document, "identity-public");
+    if let Err(error) = with_roster_mut(|roster| roster.update_keys(&id, &private, &public)) {
+        set_status(document, "identity-status", "err", &error);
+        return;
+    }
+    refresh_identity_list(document);
+    if is_open(document, "verify") {
+        schedule_verify(document);
+    }
 }
 
-fn first_filled_input(document: &Document, ids: &[&str]) -> String {
-    for id in ids {
-        let value = input_value(document, id);
-        if !value.trim().is_empty() {
-            return value;
+fn refresh_identity_ui(document: &Document) {
+    refresh_identity_list(document);
+    fill_identity_select(document, "sign-identity");
+    fill_identity_select(document, "verify-identity");
+    refresh_identity_detail(document);
+}
+
+fn refresh_identity_list(document: &Document) {
+    let Some(list) = document.get_element_by_id("identity-list") else {
+        return;
+    };
+    list.set_inner_html("");
+    let selected = selected_id();
+    let identities = with_roster(|roster| roster.list().to_vec());
+    for identity in identities {
+        let Ok(row) = document.create_element("button") else {
+            continue;
+        };
+        let _ = row.set_attribute("type", "button");
+        let _ = row.set_attribute("data-identity-id", &identity.id);
+        row.set_class_name(if identity.id == selected {
+            "identity-row selected"
+        } else {
+            "identity-row"
+        });
+        if let Ok(name) = document.create_element("span") {
+            name.set_class_name("identity-name");
+            name.set_text_content(Some(&identity.label));
+            let _ = row.append_child(&name);
+        }
+        if let Ok(meta) = document.create_element("span") {
+            meta.set_class_name("identity-meta");
+            meta.set_text_content(Some(&format!(
+                "{} · {}",
+                short_alg(&identity.algorithm),
+                trunc_hex(&identity.public_hex)
+            )));
+            let _ = row.append_child(&meta);
+        }
+        let _ = list.append_child(&row);
+    }
+    let Ok(new_row) = document.create_element("button") else {
+        return;
+    };
+    let _ = new_row.set_attribute("type", "button");
+    let _ = new_row.set_attribute("data-identity-id", NEW_IDENTITY_ID);
+    new_row.set_class_name(if selected == NEW_IDENTITY_ID {
+        "identity-row identity-new selected"
+    } else {
+        "identity-row identity-new"
+    });
+    if let Ok(name) = document.create_element("span") {
+        name.set_class_name("identity-name");
+        name.set_text_content(Some("+ New Identity"));
+        let _ = new_row.append_child(&name);
+    }
+    let _ = list.append_child(&new_row);
+}
+
+fn highlight_identity_rows(document: &Document) {
+    let Some(list) = document.get_element_by_id("identity-list") else {
+        return;
+    };
+    let selected = selected_id();
+    let Ok(rows) = list.query_selector_all("[data-identity-id]") else {
+        return;
+    };
+    for index in 0..rows.length() {
+        let Some(el) = rows
+            .item(index)
+            .and_then(|node| node.dyn_into::<web_sys::Element>().ok())
+        else {
+            continue;
+        };
+        let id = el.get_attribute("data-identity-id").unwrap_or_default();
+        let _ = el.class_list().remove_1("selected");
+        if id == selected {
+            let _ = el.class_list().add_1("selected");
         }
     }
-    String::new()
+}
+
+fn refresh_identity_detail(document: &Document) {
+    let selected = selected_id();
+    let adding = selected == NEW_IDENTITY_ID;
+    set_hidden(document, "identity-add-panel", !adding);
+    set_hidden(document, "identity-selected-panel", adding);
+    set_hidden(document, "btn-identity-add-bar", !adding);
+    if adding {
+        set_hidden(document, "identity-actions", true);
+        return;
+    }
+    let Some(identity) = with_roster(|roster| roster.get(&selected).cloned()) else {
+        set_selected_id(NEW_IDENTITY_ID);
+        set_hidden(document, "identity-add-panel", false);
+        set_hidden(document, "identity-selected-panel", true);
+        set_hidden(document, "btn-identity-add-bar", false);
+        set_hidden(document, "identity-actions", true);
+        return;
+    };
+    with_identity_sync(|| {
+        if let Some(title) = document.get_element_by_id("identity-selected-title") {
+            title.set_text_content(Some(&identity.label));
+        }
+        set_select(document, "identity-algorithm", &identity.algorithm);
+        set_input(document, "identity-private", &identity.private_hex);
+        set_input(document, "identity-public", &identity.public_hex);
+        set_readonly(document, "identity-private", identity.preset);
+        set_readonly(document, "identity-public", identity.preset);
+        if let Some(algorithm) = select(document, "identity-algorithm") {
+            algorithm.set_disabled(identity.preset);
+        }
+        set_hidden(document, "identity-actions", identity.preset);
+    });
+}
+
+fn fill_identity_select(document: &Document, id: &str) {
+    let Some(select) = select(document, id) else {
+        return;
+    };
+    let previous = select.value();
+    while select.length() > 0 {
+        select.remove_with_index(0);
+    }
+    let identities = with_roster(|roster| roster.list().to_vec());
+    for identity in &identities {
+        let Ok(option) = document.create_element("option") else {
+            continue;
+        };
+        let _ = option.set_attribute("value", &identity.id);
+        option.set_text_content(Some(&format!(
+            "{} · {}",
+            identity.label,
+            short_alg(&identity.algorithm)
+        )));
+        let _ = select.append_child(&option);
+    }
+    let fallback = if identities.iter().any(|identity| identity.id == previous) {
+        previous
+    } else {
+        DEFAULT_IDENTITY.to_string()
+    };
+    select.set_value(&fallback);
+}
+
+fn fallback_select(document: &Document, id: &str, removed: &str) {
+    if select_value(document, id).as_deref() == Some(removed) {
+        set_select(document, id, DEFAULT_IDENTITY);
+    }
+}
+
+fn with_roster<T>(f: impl FnOnce(&Roster) -> T) -> T {
+    ROSTER.with(|cell| f(&cell.borrow()))
+}
+
+fn with_roster_mut<T>(f: impl FnOnce(&mut Roster) -> T) -> T {
+    ROSTER.with(|cell| f(&mut cell.borrow_mut()))
+}
+
+fn selected_id() -> String {
+    SELECTED_ID.with(|cell| cell.borrow().clone())
+}
+
+fn set_selected_id(id: &str) {
+    SELECTED_ID.with(|cell| *cell.borrow_mut() = id.to_string());
+}
+
+fn last_content_window() -> String {
+    LAST_CONTENT_WINDOW.with(|cell| cell.borrow().clone())
+}
+
+fn set_last_content_window(name: &str) {
+    LAST_CONTENT_WINDOW.with(|cell| *cell.borrow_mut() = name.to_string());
+}
+
+fn copy_sign_identity_to_verify(document: &Document) {
+    if let Some(id) = select_value(document, "sign-identity") {
+        set_select(document, "verify-identity", &id);
+    }
+}
+
+fn identity_syncing() -> bool {
+    IDENTITY_SYNCING.with(Cell::get)
+}
+
+fn with_identity_sync(f: impl FnOnce()) {
+    IDENTITY_SYNCING.with(|cell| cell.set(true));
+    f();
+    IDENTITY_SYNCING.with(|cell| cell.set(false));
 }
 
 fn bind_validate(document: &Document) {
@@ -311,15 +582,23 @@ fn bind_sign(document: &Document) {
     let document = document.clone();
     let closure = Closure::<dyn FnMut()>::new(move || {
         let payload = textarea_value(&document, "sign-payload");
-        let algorithm =
-            select_value(&document, "sign-algorithm").unwrap_or_else(|| ED25519_NAME.into());
-        let key = input_value(&document, "key-private");
+        let id =
+            select_value(&document, "sign-identity").unwrap_or_else(|| DEFAULT_IDENTITY.into());
+        let Some(identity) = with_roster(|roster| roster.get(&id).cloned()) else {
+            set_status(
+                &document,
+                "sign-status",
+                "err",
+                &format!("unknown identity '{id}'"),
+            );
+            return;
+        };
         let keyid = input_value(&document, "sign-keyid");
         let form = select_value(&document, "sign-form").unwrap_or_else(|| "yaml".into());
         let result = ops::sign(
             &payload,
-            &algorithm,
-            &key,
+            &identity.algorithm,
+            &identity.private_hex,
             if keyid.is_empty() {
                 None
             } else {
@@ -379,7 +658,6 @@ fn send_from_sign(document: &Document, dest: &str) {
         return;
     }
     let form = select_value(document, "sign-form").unwrap_or_else(|| "yaml".into());
-    carry_keys(document);
     set_textarea(document, "verify-artifact", &artifact);
     set_select(document, "verify-form", &form);
     set_textarea(document, "decompose-artifact", &artifact);
@@ -395,10 +673,8 @@ fn bind_verify(document: &Document) {
         let _ = btn.add_event_listener_with_callback("click", closure.as_ref().unchecked_ref());
         closure.forget();
     }
-    for id in ["verify-artifact", "key-public"] {
-        bind_input_event(document, id, "input", schedule_verify);
-    }
-    for id in ["verify-form", "verify-algorithm"] {
+    bind_input_event(document, "verify-artifact", "input", schedule_verify);
+    for id in ["verify-form", "verify-identity"] {
         bind_input_event(document, id, "change", schedule_verify);
     }
 }
@@ -416,15 +692,30 @@ fn run_verify(document: &Document, flash: bool) {
     let artifact = textarea_value(document, "verify-artifact");
     if artifact.trim().is_empty() {
         set_textarea(document, "verify-payload", "");
-        set_box_state(document, "verify-payload-box", "");
-        set_status(document, "verify-status", "", "idle");
+        if flash {
+            set_box_state(document, "verify-payload-box", "err");
+            set_status(document, "verify-status", "warn", "document is empty");
+            play_flash(document, "verify-flash", false);
+        } else {
+            set_box_state(document, "verify-payload-box", "");
+            set_status(document, "verify-status", "", "idle");
+        }
         return;
     }
     let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
-    let algorithm =
-        select_value(document, "verify-algorithm").unwrap_or_else(|| ED25519_NAME.into());
-    let key = input_value(document, "key-public");
-    let result = ops::verify(&artifact, &form, &algorithm, &key);
+    let id = select_value(document, "verify-identity").unwrap_or_else(|| DEFAULT_IDENTITY.into());
+    let Some(identity) = with_roster(|roster| roster.get(&id).cloned()) else {
+        set_textarea(document, "verify-payload", "");
+        set_box_state(document, "verify-payload-box", "err");
+        set_status(
+            document,
+            "verify-status",
+            "err",
+            &format!("unknown identity '{id}'"),
+        );
+        return;
+    };
+    let result = ops::verify(&artifact, &form, &identity.algorithm, &identity.public_hex);
     set_textarea(document, "verify-payload", &result.primary);
     let ok = result.status == "verified";
     set_box_state(
@@ -433,9 +724,36 @@ fn run_verify(document: &Document, flash: bool) {
         if ok { "ok" } else { "err" },
     );
     show_result(document, "verify-status", &result);
+    if !ok
+        && matches!(
+            result.status.as_str(),
+            "signed_but_failed_verification" | "signed_but_algorithm_unsupported"
+        )
+        && let Some(name) = matching_other_identity(&artifact, &form, &id)
+        && let Some(el) = document.get_element_by_id("verify-status")
+    {
+        let current = el.text_content().unwrap_or_default();
+        el.set_text_content(Some(&format!(
+            "{current} (but this does match {name}'s key)"
+        )));
+    }
     if flash {
         play_flash(document, "verify-flash", ok);
     }
+}
+
+fn matching_other_identity(artifact: &str, form: &str, skip_id: &str) -> Option<String> {
+    let identities = with_roster(|roster| roster.list().to_vec());
+    for identity in identities {
+        if identity.id == skip_id {
+            continue;
+        }
+        let result = ops::verify(artifact, form, &identity.algorithm, &identity.public_hex);
+        if result.status == "verified" {
+            return Some(identity.label);
+        }
+    }
+    None
 }
 
 fn bind_compose(document: &Document) {
@@ -928,6 +1246,26 @@ fn set_input(document: &Document, id: &str, value: &str) {
         .and_then(|e| e.dyn_into::<HtmlInputElement>().ok())
     {
         el.set_value(value);
+    }
+}
+
+fn set_readonly(document: &Document, id: &str, readonly: bool) {
+    if let Some(el) = document
+        .get_element_by_id(id)
+        .and_then(|e| e.dyn_into::<HtmlInputElement>().ok())
+    {
+        el.set_read_only(readonly);
+    }
+}
+
+fn set_hidden(document: &Document, id: &str, hidden: bool) {
+    let Some(el) = document.get_element_by_id(id) else {
+        return;
+    };
+    if hidden {
+        let _ = el.set_attribute("hidden", "");
+    } else {
+        let _ = el.remove_attribute("hidden");
     }
 }
 

@@ -75,8 +75,8 @@
         <p class="kicker">yaml-sigil v1alpha1 // wasm trapline</p>
         <h1>YAML SIGIL</h1>
         <p class="lede">
-          Pick a window. Sign, verify, compose, decompose, or parse YAML.
-          Example WASM integration with ephemeral keys.
+          Pick a window. Keep a session roster, then sign, verify, compose,
+          decompose, or parse YAML. Example WASM integration with ephemeral keys.
         </p>
       </header>
 
@@ -86,23 +86,28 @@
           <span class="op-name">Validate</span>
           <span class="op-blurb">Parse YAML. Well-formed or not.</span>
         </button>
-        <button type="button" class="op-card op-sign" data-open-window="sign">
+        <button type="button" class="op-card op-identity" data-open-window="identity">
           <span class="op-code">02</span>
+          <span class="op-name">Identity</span>
+          <span class="op-blurb">Alice, Bob, Carol, and extras you mint.</span>
+        </button>
+        <button type="button" class="op-card op-sign" data-open-window="sign">
+          <span class="op-code">03</span>
           <span class="op-name">Sign</span>
-          <span class="op-blurb">Mint a pair. Mark a payload.</span>
+          <span class="op-blurb">Pick an identity. Mark a payload.</span>
         </button>
         <button type="button" class="op-card op-verify" data-open-window="verify">
-          <span class="op-code">03</span>
+          <span class="op-code">04</span>
           <span class="op-name">Verify</span>
-          <span class="op-blurb">Check an artifact against a public key.</span>
+          <span class="op-blurb">Check an artifact against an identity.</span>
         </button>
         <button type="button" class="op-card op-compose" data-open-window="compose">
-          <span class="op-code">04</span>
+          <span class="op-code">05</span>
           <span class="op-name">Compose</span>
           <span class="op-blurb">Join payload and carrier. No crypto.</span>
         </button>
         <button type="button" class="op-card op-decompose" data-open-window="decompose">
-          <span class="op-code">05</span>
+          <span class="op-code">06</span>
           <span class="op-name">Decompose</span>
           <span class="op-blurb">Split an artifact into payload and carrier.</span>
         </button>
@@ -149,11 +154,81 @@
       </div>
     </section>
 
+    <section class="window window-identity" data-window="identity" hidden>
+      <header class="window-bar">
+        <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-title">
+          <p class="window-kicker">02 // roster</p>
+          <h1>IDENTITY</h1>
+        </div>
+        <button type="button" id="btn-identity-add-bar" class="primary">Mint</button>
+      </header>
+      <div class="window-body identity-body">
+        <aside class="rail">
+          <h2>Session roster</h2>
+          <div id="identity-list" class="identity-list"></div>
+          <p class="identity-note">
+            (Note: Alice, Bob, and Carol are ephemeral keys per session.)
+          </p>
+          <p id="identity-status" class="status">waiting for WASM…</p>
+        </aside>
+        <div class="work">
+          <article class="panel grow" id="identity-add-panel">
+            <h2>Add identity</h2>
+            <label>
+              Name
+              <input id="identity-new-name" spellcheck="false" autocomplete="off" />
+            </label>
+            <label>
+              Algorithm
+              <select id="identity-new-algorithm">
+                <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
+                  ED25519_PUREEDDSA_RAW_RS64_CANONICAL
+                </option>
+                <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
+                  ECDSA_SECP256R1_SHA256_RAW_RS64
+                </option>
+              </select>
+            </label>
+            <div class="identity-actions">
+              <button type="button" id="btn-identity-add" class="primary">Mint</button>
+            </div>
+          </article>
+          <article class="panel grow" id="identity-selected-panel" hidden>
+            <h2 id="identity-selected-title">Selected</h2>
+            <label>
+              Algorithm
+              <select id="identity-algorithm">
+                <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL">
+                  ED25519_PUREEDDSA_RAW_RS64_CANONICAL
+                </option>
+                <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
+                  ECDSA_SECP256R1_SHA256_RAW_RS64
+                </option>
+              </select>
+            </label>
+            <label>
+              Private (hex or base64, session only)
+              <input id="identity-private" spellcheck="false" autocomplete="off" />
+            </label>
+            <label>
+              Public (hex or base64)
+              <input id="identity-public" spellcheck="false" autocomplete="off" />
+            </label>
+            <div class="identity-actions" id="identity-actions" hidden>
+              <button type="button" id="btn-identity-remint">Remint</button>
+              <button type="button" id="btn-identity-delete">Remove</button>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <section class="window window-sign" data-window="sign" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
         <div class="window-title">
-          <p class="window-kicker">02 // mark</p>
+          <p class="window-kicker">03 // mark</p>
           <h1>SIGN</h1>
         </div>
         <button type="button" id="btn-sign" class="primary">Sign</button>
@@ -162,26 +237,10 @@
       </header>
       <div class="window-body sign-body">
         <aside class="rail">
-          <h2>Ephemeral key pair</h2>
+          <h2>Identity</h2>
           <label>
-            Algorithm
-            <select id="sign-algorithm">
-              <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
-                ED25519_PUREEDDSA_RAW_RS64_CANONICAL
-              </option>
-              <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
-                ECDSA_SECP256R1_SHA256_RAW_RS64
-              </option>
-            </select>
-          </label>
-          <button type="button" id="btn-mint-sign">Mint new pair</button>
-          <label>
-            Private (hex or base64, session only)
-            <input id="key-private" spellcheck="false" autocomplete="off" />
-          </label>
-          <label>
-            Public (hex or base64)
-            <input id="sign-public" spellcheck="false" autocomplete="off" />
+            Who signs
+            <select id="sign-identity"></select>
           </label>
           <label>
             Output form
@@ -194,7 +253,6 @@
             Optional keyid
             <input id="sign-keyid" spellcheck="false" />
           </label>
-          <p id="key-status" class="status">waiting for WASM…</p>
         </aside>
         <div class="work split">
           <article class="panel grow">
@@ -214,7 +272,7 @@
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
         <div class="window-title">
-          <p class="window-kicker">03 // check</p>
+          <p class="window-kicker">04 // check</p>
           <h1>VERIFY</h1>
         </div>
         <button type="button" id="btn-verify" class="primary">Verify</button>
@@ -242,26 +300,10 @@
           </article>
         </div>
         <aside class="rail">
-          <h2>Session key pair</h2>
+          <h2>Identity</h2>
           <label>
-            Algorithm
-            <select id="verify-algorithm">
-              <option value="ED25519_PUREEDDSA_RAW_RS64_CANONICAL" selected>
-                ED25519_PUREEDDSA_RAW_RS64_CANONICAL
-              </option>
-              <option value="ECDSA_SECP256R1_SHA256_RAW_RS64">
-                ECDSA_SECP256R1_SHA256_RAW_RS64
-              </option>
-            </select>
-          </label>
-          <button type="button" id="btn-mint-verify">Mint new pair</button>
-          <label>
-            Private (hex or base64, session only)
-            <input id="verify-private" spellcheck="false" autocomplete="off" />
-          </label>
-          <label>
-            Public (hex or base64)
-            <input id="key-public" spellcheck="false" autocomplete="off" />
+            Who verifies
+            <select id="verify-identity"></select>
           </label>
           <label>
             Artifact form
@@ -279,7 +321,7 @@
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
         <div class="window-title">
-          <p class="window-kicker">04 // join</p>
+          <p class="window-kicker">05 // join</p>
           <h1>COMPOSE</h1>
         </div>
         <label class="bar-field">
@@ -389,7 +431,7 @@
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
         <div class="window-title">
-          <p class="window-kicker">05 // split</p>
+          <p class="window-kicker">06 // split</p>
           <h1>DECOMPOSE</h1>
         </div>
         <label class="bar-field">
