@@ -5,8 +5,9 @@ use p256::ecdsa::SigningKey as P256SigningKey;
 use rand::rngs::OsRng;
 use zeroize::Zeroize;
 
-use crate::codec::to_hex;
+use crate::codec::{decode_key_bytes, to_hex};
 use crate::ops::{ED25519_NAME, P256_NAME};
+use yaml_sigil_verification::{resolve_ed25519_verifying_key, resolve_p256_verifying_key};
 
 pub struct KeyPairHex {
     pub private_hex: String,
@@ -41,6 +42,25 @@ pub fn generate_keypair(algorithm: &str) -> Result<KeyPairHex, String> {
     }
 }
 
+pub fn canonical_public_key(algorithm: &str, public_key: &str) -> Result<String, String> {
+    let bytes = decode_key_bytes(public_key)?;
+    match algorithm {
+        ED25519_NAME => {
+            let key = resolve_ed25519_verifying_key(&bytes).map_err(|_| {
+                "public key is not a valid ED25519_PUREEDDSA_RAW_RS64_CANONICAL key".to_string()
+            })?;
+            Ok(to_hex(key.as_bytes()))
+        }
+        P256_NAME => {
+            let key = resolve_p256_verifying_key(&bytes).map_err(|_| {
+                "public key is not a valid ECDSA_SECP256R1_SHA256_RAW_RS64 key".to_string()
+            })?;
+            Ok(to_hex(key.to_encoded_point(true).as_bytes()))
+        }
+        _ => Err("unsupported algorithm".into()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,5 +80,16 @@ mod tests {
         assert_eq!(pair.private_hex.len(), 64);
         assert!(pair.public_hex.len() == 66 || pair.public_hex.len() == 130);
         assert!(generate_keypair("not-an-alg").is_err());
+    }
+
+    #[test]
+    fn canonical_public_key_rejects_garbage() {
+        let pair = generate_keypair(ED25519_NAME).expect("ed25519");
+        let canonical = canonical_public_key(ED25519_NAME, &pair.public_hex).expect("canonical");
+        assert_eq!(canonical, pair.public_hex);
+        assert!(canonical_public_key(ED25519_NAME, "").is_err());
+        assert!(canonical_public_key(ED25519_NAME, "not-a-key").is_err());
+        assert!(canonical_public_key(ED25519_NAME, "00").is_err());
+        assert!(canonical_public_key(P256_NAME, &pair.public_hex).is_err());
     }
 }

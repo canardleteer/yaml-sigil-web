@@ -31,6 +31,7 @@ getrandom = { version = "0.2", features = ["js"] }
 js-sys = { version = "=0.3.104", default-features = false, features = ["std"] }
 noyalib = { version = "0.0.26", default-features = false, features = ["std"] }
 p256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
+plot_icon = { version = "0.3.0", default-features = false, features = ["vec"] }
 rand = "0.8"
 serde_json = "1.0"
 wasm-bindgen = "=0.2.127"
@@ -43,6 +44,7 @@ zeroize = { version = "1.8", default-features = false, features = ["alloc"] }
 [dependencies.web-sys]
 version = "0.3"
 features = [
+    "CssStyleDeclaration",
     "Document",
     "DomTokenList",
     "Element",
@@ -53,6 +55,8 @@ features = [
     "HtmlInputElement",
     "HtmlSelectElement",
     "HtmlTextAreaElement",
+    "KeyboardEvent",
+    "DomRect",
     "Node",
     "NodeList",
     "Location",

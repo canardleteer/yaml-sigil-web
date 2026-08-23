@@ -101,15 +101,15 @@
           <span class="op-name">Verify</span>
           <span class="op-blurb">Check an artifact against an identity.</span>
         </button>
-        <button type="button" class="op-card op-compose" data-open-window="compose">
-          <span class="op-code">05</span>
-          <span class="op-name">Compose</span>
-          <span class="op-blurb">Join payload and carrier. No crypto.</span>
-        </button>
         <button type="button" class="op-card op-decompose" data-open-window="decompose">
-          <span class="op-code">06</span>
+          <span class="op-code">05</span>
           <span class="op-name">Decompose</span>
           <span class="op-blurb">Split an artifact into payload and carrier.</span>
+        </button>
+        <button type="button" class="op-card op-compose" data-open-window="compose">
+          <span class="op-code">06</span>
+          <span class="op-name">Compose</span>
+          <span class="op-blurb">Join payload and carrier. No crypto.</span>
         </button>
       </nav>
 
@@ -127,9 +127,16 @@
     <section class="window window-validate" data-window="validate" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
           <p class="window-kicker">01 // parse</p>
           <h1>VALIDATE</h1>
+        </div>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
         </div>
         <button type="button" id="btn-validate" class="primary">Parse YAML</button>
         <button type="button" id="btn-send-sign">Send to sign</button>
@@ -157,9 +164,16 @@
     <section class="window window-identity" data-window="identity" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
           <p class="window-kicker">02 // roster</p>
           <h1>IDENTITY</h1>
+        </div>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
         </div>
         <button type="button" id="btn-identity-add-bar" class="primary">Mint</button>
       </header>
@@ -190,12 +204,27 @@
                 </option>
               </select>
             </label>
+            <label class="check">
+              <input type="checkbox" id="identity-verify-only" />
+              Verify only
+            </label>
+            <label id="identity-new-public-wrap" hidden>
+              Public (hex or base64)
+              <span class="key-with-icon">
+                <span class="identicon" id="identity-new-public-icon"></span>
+                <input id="identity-new-public" spellcheck="false" autocomplete="off" />
+              </span>
+            </label>
             <div class="identity-actions">
-              <button type="button" id="btn-identity-add" class="primary">Mint</button>
+              <button type="button" id="btn-identity-mint" class="primary">Mint</button>
+              <button type="button" id="btn-identity-add" hidden>Add</button>
             </div>
           </article>
           <article class="panel grow" id="identity-selected-panel" hidden>
-            <h2 id="identity-selected-title">Selected</h2>
+            <h2 id="identity-selected-heading">
+              <span class="identicon" id="identity-selected-icon"></span>
+              <span id="identity-selected-title">Selected</span>
+            </h2>
             <label>
               Algorithm
               <select id="identity-algorithm">
@@ -213,7 +242,10 @@
             </label>
             <label>
               Public (hex or base64)
-              <input id="identity-public" spellcheck="false" autocomplete="off" />
+              <span class="key-with-icon">
+                <span class="identicon" id="identity-public-icon"></span>
+                <input id="identity-public" spellcheck="false" autocomplete="off" />
+              </span>
             </label>
             <div class="identity-actions" id="identity-actions" hidden>
               <button type="button" id="btn-identity-remint">Remint</button>
@@ -227,9 +259,16 @@
     <section class="window window-sign" data-window="sign" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
           <p class="window-kicker">03 // mark</p>
           <h1>SIGN</h1>
+        </div>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
         </div>
         <button type="button" id="btn-sign" class="primary">Sign</button>
         <button type="button" id="btn-send-verify">Send to verify</button>
@@ -240,29 +279,47 @@
           <h2>Identity</h2>
           <label>
             Who signs
-            <select id="sign-identity"></select>
-          </label>
-          <label>
-            Output form
-            <select id="sign-form">
-              <option value="yaml" selected>yaml</option>
-              <option value="protobuf">protobuf (base64)</option>
-            </select>
+            <span class="identity-pick">
+              <span class="identicon" id="sign-identity-icon"></span>
+              <select id="sign-identity"></select>
+            </span>
           </label>
           <label>
             Optional keyid
             <input id="sign-keyid" spellcheck="false" />
           </label>
         </aside>
-        <div class="work split">
-          <article class="panel grow">
-            <h2>Payload (YAML)</h2>
-            <textarea id="sign-payload" spellcheck="false"></textarea>
-          </article>
-          <article class="panel grow">
-            <h2>Signed artifact</h2>
-            <textarea id="sign-artifact" spellcheck="false" readonly></textarea>
-          </article>
+        <div class="result-stage sign-stage">
+          <div class="work split">
+            <article class="panel grow">
+              <h2>Payload (YAML)</h2>
+              <textarea id="sign-payload" spellcheck="false"></textarea>
+            </article>
+            <article class="panel grow">
+              <div class="panel-head">
+                <h2>Signed artifact</h2>
+                <label class="panel-field">
+                  Output form
+                  <select id="sign-form">
+                    <option value="yaml" selected>yaml</option>
+                    <option value="protobuf">protobuf (base64)</option>
+                  </select>
+                </label>
+              </div>
+              <textarea id="sign-artifact" spellcheck="false" readonly></textarea>
+            </article>
+          </div>
+          <div class="result-flash" id="sign-flash" aria-hidden="true">
+            <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M34 62 L52 82 L88 38"></path>
+            </svg>
+            <svg class="flash-x" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+              <circle cx="60" cy="60" r="50"></circle>
+              <path d="M40 40 L80 80"></path>
+              <path d="M80 40 L40 80"></path>
+            </svg>
+          </div>
         </div>
         <p id="sign-status" class="status span">idle</p>
       </div>
@@ -271,9 +328,16 @@
     <section class="window window-verify" data-window="verify" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
           <p class="window-kicker">04 // check</p>
           <h1>VERIFY</h1>
+        </div>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
         </div>
         <button type="button" id="btn-verify" class="primary">Verify</button>
       </header>
@@ -282,10 +346,16 @@
           <article class="panel grow">
             <h2>Artifact</h2>
             <textarea id="verify-artifact" spellcheck="false"></textarea>
+            <div class="panel-actions">
+              <button type="button" id="btn-send-verify-decompose">Send to decompose</button>
+            </div>
           </article>
           <article class="panel grow" id="verify-payload-box">
             <h2>Authenticated payload</h2>
             <textarea id="verify-payload" spellcheck="false" readonly></textarea>
+            <div class="panel-actions">
+              <button type="button" id="btn-send-verify-sign">Send to sign</button>
+            </div>
             <div class="result-flash" id="verify-flash" aria-hidden="true">
               <svg class="flash-check" viewBox="0 0 120 120" fill="none" aria-hidden="true">
                 <circle cx="60" cy="60" r="50"></circle>
@@ -302,16 +372,17 @@
         <aside class="rail">
           <h2>Identity</h2>
           <label>
-            Who verifies
-            <select id="verify-identity"></select>
+            Verify Signature By
+            <span class="identity-pick">
+              <span class="identicon" id="verify-identity-icon"></span>
+              <select id="verify-identity"></select>
+            </span>
           </label>
-          <label>
-            Artifact form
-            <select id="verify-form">
-              <option value="yaml" selected>yaml</option>
-              <option value="protobuf">protobuf (base64)</option>
-            </select>
-          </label>
+          <h2>Form</h2>
+          <select id="verify-form">
+            <option value="yaml" selected>yaml</option>
+            <option value="protobuf">protobuf (base64)</option>
+          </select>
           <p id="verify-status" class="status">idle</p>
         </aside>
       </div>
@@ -320,18 +391,20 @@
     <section class="window window-compose" data-window="compose" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
-          <p class="window-kicker">05 // join</p>
+          <p class="window-kicker">06 // join</p>
           <h1>COMPOSE</h1>
         </div>
-        <label class="bar-field">
-          Form
-          <select id="compose-form">
-            <option value="yaml" selected>yaml</option>
-            <option value="protobuf">protobuf (base64)</option>
-          </select>
-        </label>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
+        </div>
         <button type="button" id="btn-compose" class="primary">Compose</button>
+        <button type="button" id="btn-send-compose-verify">Send to verify</button>
+        <button type="button" id="btn-send-compose-decompose">Send to decompose</button>
       </header>
       <div class="window-body compose-body" id="compose-body">
         <div class="split">
@@ -383,6 +456,13 @@
             </div>
           </article>
         </div>
+        <article class="panel form-strip">
+          <h2>Form</h2>
+          <select id="compose-form" aria-label="Form">
+            <option value="yaml" selected>yaml</option>
+            <option value="protobuf">protobuf (base64)</option>
+          </select>
+        </article>
         <article class="panel grow" id="compose-artifact-box">
           <h2>Artifact</h2>
           <textarea id="compose-artifact" class="hide-in-proto" spellcheck="false" readonly></textarea>
@@ -430,26 +510,19 @@
     <section class="window window-decompose" data-window="decompose" hidden>
       <header class="window-bar">
         <button type="button" class="ghost" data-close-window>Deck</button>
+        <div class="window-heading">
         <div class="window-title">
-          <p class="window-kicker">06 // split</p>
+          <p class="window-kicker">05 // split</p>
           <h1>DECOMPOSE</h1>
         </div>
-        <label class="bar-field">
-          Form
-          <select id="decompose-form">
-            <option value="yaml" selected>yaml</option>
-            <option value="protobuf">protobuf (base64)</option>
-          </select>
-        </label>
-        <label class="bar-field">
-          Outer conformance (protobuf only)
-          <select id="decompose-outer">
-            <option value="omit" selected>omit (YAML)</option>
-            <option value="strict">strict</option>
-            <option value="signature_strict">signature_strict</option>
-          </select>
-        </label>
+        <button type="button" class="current-id" aria-haspopup="listbox" aria-expanded="false">
+          <span class="identicon" data-current-id-icon></span>
+          <span class="current-id-text">Current Id: <span class="current-id-name">alice</span></span>
+          <span class="current-id-caret" aria-hidden="true">▾</span>
+        </button>
+        </div>
         <button type="button" id="btn-decompose" class="primary">Decompose</button>
+        <button type="button" id="btn-send-compose">Send to compose</button>
       </header>
       <div class="window-body decompose-body" id="decompose-body">
         <article class="panel grow" id="decompose-artifact-box">
@@ -460,6 +533,26 @@
             <path d="M40 40 L80 80"></path>
             <path d="M80 40 L40 80"></path>
           </svg>
+        </article>
+        <article class="panel form-strip">
+          <h2>Form</h2>
+          <div class="form-strip-fields">
+            <label class="panel-field">
+              Form
+              <select id="decompose-form">
+                <option value="yaml" selected>yaml</option>
+                <option value="protobuf">protobuf (base64)</option>
+              </select>
+            </label>
+            <label class="panel-field">
+              Outer conformance (protobuf only)
+              <select id="decompose-outer">
+                <option value="omit" selected>omit (YAML)</option>
+                <option value="strict">strict</option>
+                <option value="signature_strict">signature_strict</option>
+              </select>
+            </label>
+          </div>
         </article>
         <div class="result-stage" id="decompose-result-stage">
           <div class="split">
@@ -507,5 +600,7 @@
         <p id="decompose-status" class="status">idle</p>
       </div>
     </section>
+
+    <div id="current-id-menu" class="current-id-menu" hidden role="listbox" aria-label="Current identity"></div>
   </body>
 </html>

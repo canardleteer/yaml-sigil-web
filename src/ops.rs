@@ -55,6 +55,10 @@ impl OpResult {
         }
     }
 
+    pub fn invocation_error(code: &str) -> Self {
+        Self::invocation(code)
+    }
+
     fn err(status: &str, code: &str) -> Self {
         Self {
             status: status.into(),

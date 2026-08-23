@@ -4,7 +4,7 @@ use rand::Rng;
 use rand::rngs::OsRng;
 use rand::seq::SliceRandom;
 
-use crate::keys::generate_keypair;
+use crate::keys::{canonical_public_key, generate_keypair};
 use crate::ops::{ED25519_NAME, P256_NAME};
 
 pub const PRESET_IDS: [&str; 3] = ["alice", "bob", "carol"];
@@ -17,6 +17,17 @@ pub struct Identity {
     pub private_hex: String,
     pub public_hex: String,
     pub preset: bool,
+    pub verify_only: bool,
+}
+
+impl Identity {
+    pub fn display_name(&self) -> String {
+        if self.verify_only {
+            format!("{} (verify only)", self.label)
+        } else {
+            self.label.clone()
+        }
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -40,6 +51,7 @@ impl Roster {
                 private_hex: pair.private_hex,
                 public_hex: pair.public_hex,
                 preset: true,
+                verify_only: false,
             });
         }
         Ok(Self { identities })
@@ -54,6 +66,56 @@ impl Roster {
     }
 
     pub fn add(&mut self, label: &str, algorithm: &str) -> Result<String, String> {
+        let id = self.prepare_new_id(label)?;
+        let pair = generate_keypair(algorithm)?;
+        self.identities.push(Identity {
+            id: id.clone(),
+            label: label.trim().to_string(),
+            algorithm: algorithm.to_string(),
+            private_hex: pair.private_hex,
+            public_hex: pair.public_hex,
+            preset: false,
+            verify_only: false,
+        });
+        Ok(id)
+    }
+
+    pub fn mint_verify_only(&mut self, label: &str, algorithm: &str) -> Result<String, String> {
+        let id = self.prepare_new_id(label)?;
+        let pair = generate_keypair(algorithm)?;
+        self.identities.push(Identity {
+            id: id.clone(),
+            label: label.trim().to_string(),
+            algorithm: algorithm.to_string(),
+            private_hex: String::new(),
+            public_hex: pair.public_hex,
+            preset: false,
+            verify_only: true,
+        });
+        Ok(id)
+    }
+
+    pub fn add_verify_only(
+        &mut self,
+        label: &str,
+        algorithm: &str,
+        public_hex: &str,
+    ) -> Result<String, String> {
+        let public_hex = canonical_public_key(algorithm, public_hex)?;
+        let id = self.prepare_new_id(label)?;
+        self.identities.push(Identity {
+            id: id.clone(),
+            label: label.trim().to_string(),
+            algorithm: algorithm.to_string(),
+            private_hex: String::new(),
+            public_hex,
+            preset: false,
+            verify_only: true,
+        });
+        Ok(id)
+    }
+
+    fn prepare_new_id(&self, label: &str) -> Result<String, String> {
         let label = label.trim();
         if label.is_empty() {
             return Err("name is required".into());
@@ -72,15 +134,6 @@ impl Roster {
                 existing.label
             ));
         }
-        let pair = generate_keypair(algorithm)?;
-        self.identities.push(Identity {
-            id: id.clone(),
-            label: label.to_string(),
-            algorithm: algorithm.to_string(),
-            private_hex: pair.private_hex,
-            public_hex: pair.public_hex,
-            preset: false,
-        });
         Ok(id)
     }
 
@@ -92,6 +145,9 @@ impl Roster {
             .ok_or_else(|| format!("unknown identity '{id}'"))?;
         if identity.preset {
             return Err("alice, bob, and carol keep the keys minted at load".into());
+        }
+        if identity.verify_only {
+            return Err("verify-only identities do not mint private keys".into());
         }
         let pair = generate_keypair(algorithm)?;
         identity.algorithm = algorithm.to_string();
@@ -265,6 +321,42 @@ mod tests {
         assert!(roster.add("dave", P256_NAME).is_err());
         assert!(roster.add("DAVE", P256_NAME).is_err());
         assert!(roster.add("Dave", ED25519_NAME).is_err());
+    }
+
+    #[test]
+    fn add_verify_only_has_no_private_key() {
+        let mut roster = Roster::seed().expect("seed");
+        let public = roster.get("alice").unwrap().public_hex.clone();
+        let alg = roster.get("alice").unwrap().algorithm.clone();
+        let id = roster
+            .add_verify_only("Mallory", &alg, &public)
+            .expect("add verify-only");
+        assert_eq!(id, "mallory");
+        let mallory = roster.get("mallory").expect("mallory");
+        assert!(mallory.verify_only);
+        assert!(mallory.private_hex.is_empty());
+        assert_eq!(mallory.public_hex, public);
+        assert_eq!(mallory.display_name(), "Mallory (verify only)");
+        assert!(roster.remint("mallory", ED25519_NAME).is_err());
+        roster.delete("mallory").expect("delete verify-only");
+        assert!(roster.get("mallory").is_none());
+        assert!(roster.add_verify_only("Eve", ED25519_NAME, "").is_err());
+        assert!(
+            roster
+                .add_verify_only("Eve", ED25519_NAME, "not-a-key")
+                .is_err()
+        );
+        assert!(roster.add_verify_only("Eve", ED25519_NAME, "00").is_err());
+
+        let minted = roster
+            .mint_verify_only("Trent", ED25519_NAME)
+            .expect("mint verify-only");
+        assert_eq!(minted, "trent");
+        let trent = roster.get("trent").expect("trent");
+        assert!(trent.verify_only);
+        assert!(trent.private_hex.is_empty());
+        assert!(!trent.public_hex.is_empty());
+        crate::keys::canonical_public_key(ED25519_NAME, &trent.public_hex).expect("conformant");
     }
 
     #[test]
