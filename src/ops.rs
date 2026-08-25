@@ -467,6 +467,7 @@ fn verify_invocation_code(error: InvocationError) -> &'static str {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::codec::{decode_key_bytes, to_hex};
     use crate::keys::generate_keypair;
 
     const YAML: &str = "claim: ridge-line cache\nseason: 2026\n";
@@ -517,6 +518,37 @@ mod tests {
         let verified = verify(&signed.primary, "yaml", P256_NAME, &pair.public_hex);
         assert_eq!(verified.status, "verified", "{verified:?}");
         assert_eq!(verified.primary, YAML);
+
+        let bytes = decode_key_bytes(&pair.public_hex).expect("hex");
+        let key = resolve_p256_verifying_key(&bytes).expect("uncompressed");
+        let compressed = to_hex(key.to_encoded_point(true).as_bytes());
+        let rejected = verify(&signed.primary, "yaml", P256_NAME, &compressed);
+        assert_eq!(rejected.status, "invocation_error", "{rejected:?}");
+        assert_eq!(rejected.code.as_deref(), Some("key_resolution_failure"));
+    }
+
+    #[test]
+    fn protobuf_compose_preserves_payload_without_yaml_stream_rules() {
+        let pair = generate_keypair(ED25519_NAME).expect("keys");
+        let signed = sign(
+            YAML,
+            ED25519_NAME,
+            &pair.private_hex,
+            None,
+            true,
+            "protobuf",
+        );
+        assert_eq!(signed.status, "success", "{signed:?}");
+        let parts = decompose(&signed.primary, "protobuf", Some("strict"));
+        assert_eq!(parts.status, "ok", "{parts:?}");
+
+        let no_nl = "claim: ridge-line cache\nseason: 2026";
+        let proto = compose(no_nl, &parts.extra, "protobuf");
+        assert_eq!(proto.status, "success", "{proto:?}");
+
+        let yaml = compose(no_nl, "carrier\n", "yaml");
+        assert_eq!(yaml.status, "error", "{yaml:?}");
+        assert_eq!(yaml.code.as_deref(), Some("invalid_payload_bytes"));
     }
 
     #[test]
