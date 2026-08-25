@@ -1000,9 +1000,9 @@ fn bind_validate(document: &Document) {
         refresh_qr_buttons(document);
         schedule_validate(document);
     });
-    bind_click(document, "btn-validate", |document| {
-        run_validate(document, true)
-    });
+    for id in ["btn-validate", "btn-validate-foot"] {
+        bind_click(document, id, |document| run_validate(document, true));
+    }
 }
 
 fn schedule_validate(document: &Document) {
@@ -1051,7 +1051,9 @@ fn clear_sign_artifact(document: &Document) {
 }
 
 fn bind_sign(document: &Document) {
-    bind_click(document, "btn-sign", |document| run_sign(document, true));
+    for id in ["btn-sign", "btn-sign-foot"] {
+        bind_click(document, id, |document| run_sign(document, true));
+    }
     bind_input_event(document, "sign-payload", "input", clear_sign_artifact);
     bind_input_event(document, "sign-form", "change", |document| {
         run_sign(document, false);
@@ -1239,9 +1241,9 @@ fn send_verify_payload_to_sign(document: &Document) {
 }
 
 fn bind_verify(document: &Document) {
-    bind_click(document, "btn-verify", |document| {
-        run_verify(document, true)
-    });
+    for id in ["btn-verify", "btn-verify-foot"] {
+        bind_click(document, id, |document| run_verify(document, true));
+    }
     bind_click(document, "btn-verify-convert", convert_verify_artifact);
     bind_input_event(document, "verify-artifact", "input", schedule_verify);
     for id in ["verify-form", "verify-identity"] {
@@ -1358,9 +1360,9 @@ fn matching_other_identity(artifact: &str, form: &str, skip_id: &str) -> Option<
 }
 
 fn bind_compose(document: &Document) {
-    bind_click(document, "btn-compose", |document| {
-        run_compose(document, true)
-    });
+    for id in ["btn-compose", "btn-compose-foot"] {
+        bind_click(document, id, |document| run_compose(document, true));
+    }
     bind_input_event(
         document,
         "compose-carrier-alg",
@@ -1508,9 +1510,9 @@ fn refresh_compose_artifact_view(document: &Document, form: &str, artifact: &str
 }
 
 fn bind_decompose(document: &Document) {
-    bind_click(document, "btn-decompose", |document| {
-        run_decompose(document, true)
-    });
+    for id in ["btn-decompose", "btn-decompose-foot"] {
+        bind_click(document, id, |document| run_decompose(document, true));
+    }
     bind_input_event(document, "decompose-artifact", "input", schedule_decompose);
     bind_input_event(document, "decompose-outer", "change", schedule_decompose);
 }
