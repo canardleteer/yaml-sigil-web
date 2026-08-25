@@ -30,7 +30,7 @@ pub fn generate_keypair(algorithm: &str) -> Result<KeyPairHex, String> {
         P256_NAME => {
             let signing = P256SigningKey::random(&mut OsRng);
             let mut private = signing.to_bytes().to_vec();
-            let public = signing.verifying_key().to_encoded_point(true);
+            let public = signing.verifying_key().to_encoded_point(false);
             let pair = KeyPairHex {
                 private_hex: to_hex(&private),
                 public_hex: to_hex(public.as_bytes()),
@@ -53,9 +53,9 @@ pub fn canonical_public_key(algorithm: &str, public_key: &str) -> Result<String,
         }
         P256_NAME => {
             let key = resolve_p256_verifying_key(&bytes).map_err(|_| {
-                "public key is not a valid ECDSA_SECP256R1_SHA256_RAW_RS64 key".to_string()
+                "public key must be a 65-byte uncompressed SEC1 point (0x04 || X || Y)".to_string()
             })?;
-            Ok(to_hex(key.to_encoded_point(true).as_bytes()))
+            Ok(to_hex(key.to_encoded_point(false).as_bytes()))
         }
         _ => Err("unsupported algorithm".into()),
     }
@@ -78,8 +78,11 @@ mod tests {
     fn mint_ephemeral_p256_pair() {
         let pair = generate_keypair(P256_NAME).expect("p256");
         assert_eq!(pair.private_hex.len(), 64);
-        assert!(pair.public_hex.len() == 66 || pair.public_hex.len() == 130);
+        assert_eq!(pair.public_hex.len(), 130);
+        assert!(pair.public_hex.starts_with("04"));
         assert!(generate_keypair("not-an-alg").is_err());
+        let canonical = canonical_public_key(P256_NAME, &pair.public_hex).expect("canonical");
+        assert_eq!(canonical, pair.public_hex);
     }
 
     #[test]
@@ -91,5 +94,16 @@ mod tests {
         assert!(canonical_public_key(ED25519_NAME, "not-a-key").is_err());
         assert!(canonical_public_key(ED25519_NAME, "00").is_err());
         assert!(canonical_public_key(P256_NAME, &pair.public_hex).is_err());
+    }
+
+    #[test]
+    fn p256_rejects_compressed_sec1_public_key() {
+        let pair = generate_keypair(P256_NAME).expect("p256");
+        let bytes = decode_key_bytes(&pair.public_hex).expect("hex");
+        let key = resolve_p256_verifying_key(&bytes).expect("uncompressed");
+        let compressed = to_hex(key.to_encoded_point(true).as_bytes());
+        assert_eq!(compressed.len(), 66);
+        let err = canonical_public_key(P256_NAME, &compressed).expect_err("compressed");
+        assert!(err.contains("uncompressed"), "{err}");
     }
 }

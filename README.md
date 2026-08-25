@@ -78,7 +78,7 @@ Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels pr
 Algorithms:
 
 - `ED25519_PUREEDDSA_RAW_RS64_CANONICAL` — 32-byte seed / 32-byte public key
-- `ECDSA_SECP256R1_SHA256_RAW_RS64` — 32-byte scalar / SEC1 public point (compressed or uncompressed)
+- `ECDSA_SECP256R1_SHA256_RAW_RS64` — 32-byte scalar / 65-byte uncompressed SEC1 public point (`0x04 || X || Y`)
 
 Keys may be hex (`0x` optional) or base64. Each identity has an optional `keyid` hint (1 to 1024 bytes, no CR/LF); alice, bob, and carol start with their names. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
 
