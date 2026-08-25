@@ -1440,6 +1440,24 @@ code {
     width: 100%;
   }
 
+  .window-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .panel-actions,
+  .send-row {
+    flex-direction: column;
+    align-items: stretch;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .panel-actions button,
+  .send-row button {
+    width: 100%;
+  }
+
   .op-card {
     min-height: 7.5rem;
   }
