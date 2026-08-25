@@ -1532,7 +1532,7 @@ dependencies = [
 [[package]]
 name = "yaml-sigil-core"
 version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#6c4d81f3d2309df3f5757c4e1329d16f3c0784c1"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
 dependencies = [
  "base64 0.22.1",
  "buf-tools",
@@ -1548,7 +1548,7 @@ dependencies = [
 [[package]]
 name = "yaml-sigil-signing"
 version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#6c4d81f3d2309df3f5757c4e1329d16f3c0784c1"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
 dependencies = [
  "base64 0.22.1",
  "buffa",
@@ -1573,7 +1573,7 @@ dependencies = [
 [[package]]
 name = "yaml-sigil-transcription"
 version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#6c4d81f3d2309df3f5757c4e1329d16f3c0784c1"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
 dependencies = [
  "tracing",
  "yaml-sigil-core",
@@ -1583,7 +1583,7 @@ dependencies = [
 [[package]]
 name = "yaml-sigil-verification"
 version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#6c4d81f3d2309df3f5757c4e1329d16f3c0784c1"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
 dependencies = [
  "base64 0.22.1",
  "curve25519-dalek",
