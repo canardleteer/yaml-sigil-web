@@ -92,11 +92,10 @@ dependencies = [
 
 [[package]]
 name = "buf-tools"
-version = "1.72.0-hotfix.1"
+version = "1.72.0-hotfix.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fa9d1b2508fb498ef0dabb48c81bb8f4b2eafb08d45d95486c2681f1b26a92d7"
+checksum = "6d0aff13670ca31038bcdffdf18db2c102f34791c0203efda853dff8335d2c34"
 dependencies = [
- "dirs",
  "flate2",
  "hex",
  "minisign-verify",
@@ -328,27 +327,6 @@ dependencies = [
  "block-buffer 0.12.1",
  "const-oid 0.10.2",
  "crypto-common 0.2.2",
-]
-
-[[package]]
-name = "dirs"
-version = "6.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
-dependencies = [
- "dirs-sys",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
-dependencies = [
- "libc",
- "option-ext",
- "redox_users",
- "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -653,15 +631,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6d2cec3eae94f9f509c767b45932f1ada8350c4bdb85af2fcab4a3c14807981"
 
 [[package]]
-name = "libredox"
-version = "0.1.20"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28d0a00925a9f930d679b6789b721e3a7f9ed110f41b86d2497caa780c3a070a"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "linux-raw-sys"
 version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -703,16 +672,15 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "noyalib"
-version = "0.0.26"
+version = "0.0.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eaf7471054ff3fcc857fe8c5c674df7d107d2cb3072ac664a244f20b6d8dae01"
+checksum = "dd03c1156bf9e1db6dbccd703cccbc61814c6de482508eae36236a97bf26c6cc"
 dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
  "libm",
  "memchr",
  "rustc-hash",
- "serde",
  "serde_core",
  "smallvec",
 ]
@@ -731,12 +699,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "option-ext"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04744f49eae99ab78e0d5c0b603ab218f515ea8cfe5a456d7629ad883a3b6e7d"
 
 [[package]]
 name = "p256"
@@ -893,17 +855,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom 0.2.17",
-]
-
-[[package]]
-name = "redox_users"
-version = "0.5.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
-dependencies = [
- "getrandom 0.2.17",
- "libredox",
- "thiserror",
 ]
 
 [[package]]
@@ -1531,10 +1482,10 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-core"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
+version = "0.5.0"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "buf-tools",
  "buffa",
  "buffa-build",
@@ -1547,10 +1498,10 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-signing"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
+version = "0.5.0"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "buffa",
  "ed25519-dalek",
  "p256",
@@ -1563,17 +1514,17 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-traits"
-version = "0.4.0-rc.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a877411fba7d655b46a6616917fe9c25a1dd3695e0661993e48af249d2c0bac9"
+checksum = "dd46b08fb5550e45e5e5e0d94cdb6250f8a820c50a5a8b8c8117484c809b66a2"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "yaml-sigil-transcription"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
+version = "0.5.0"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
 dependencies = [
  "tracing",
  "yaml-sigil-core",
@@ -1582,10 +1533,10 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-verification"
-version = "0.5.0-rc.1"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#80914b51684345f55c0a9aadc39bd3bafff5307f"
+version = "0.5.0"
+source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.1",
  "curve25519-dalek",
  "ed25519-dalek",
  "p256",
