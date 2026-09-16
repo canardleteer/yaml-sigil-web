@@ -322,6 +322,12 @@ label {
   min-width: 0;
 }
 
+/* Keep caption chrome on the label; do not restyle typed values. */
+label :is(textarea, input, select, .yaml-hl) {
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 textarea,
 input,
 select,
