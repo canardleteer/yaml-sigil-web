@@ -8,7 +8,7 @@
 
 In-browser YamlSigil v1alpha1 demo: **Sign**, **Verify**, **Compose**, **Decompose**, plus YAML parse checks.
 
-It depends on [`canardleteer/yaml-sigil-rs` `feat/wasm`](https://github.com/canardleteer/yaml-sigil-rs/tree/feat/wasm). Keys are minted in the page session and are not stored.
+It depends on [`NVIDIA/yaml-sigil-rs` `dev/0.6.0`](https://github.com/NVIDIA/yaml-sigil-rs/tree/dev/0.6.0). Keys are minted in the page session and are not stored.
 
 This is a demo, not a key store. Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment.
 
@@ -82,4 +82,4 @@ Algorithms:
 
 Keys may be hex (`0x` optional) or base64. Each identity has an optional `keyid` hint (1 to 1024 bytes, no CR/LF); alice, bob, and carol start with their names. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
 
-Protobuf wire encoding uses [buffa](https://crates.io/crates/buffa) inside `yaml-sigil-core` (pure Rust, including `wasm32-unknown-unknown`).
+Protobuf wire encoding uses the `yaml-sigil-core` facade (Buffa stays private to that crate, including `wasm32-unknown-unknown`).

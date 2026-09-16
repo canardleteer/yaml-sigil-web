@@ -108,23 +108,26 @@ dependencies = [
 
 [[package]]
 name = "buffa"
-version = "0.5.2"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7a22fed63b429c4928fd5ed18dcacd3a98d0df1f06cd7cf651b2bbf3dbf0500"
+checksum = "a92f2f5df67a9d5ccfc65237bfc954c56328aee40a04a9b92381ecba370be246"
 dependencies = [
  "bytes",
+ "foldhash",
  "hashbrown 0.15.5",
  "once_cell",
+ "rustversion",
  "serde",
  "serde_json",
+ "smoothutf8",
  "thiserror",
 ]
 
 [[package]]
 name = "buffa-build"
-version = "0.5.2"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "20f5876826b2690e0c38eb9176fc599f8286c4929c29a8641bacdcb23d3ecc12"
+checksum = "eee6b6b4a8d23f1f98a043f188f4d9d2ef8bee43191f42e93ac577f3c3b0f334"
 dependencies = [
  "buffa",
  "buffa-codegen",
@@ -133,9 +136,9 @@ dependencies = [
 
 [[package]]
 name = "buffa-codegen"
-version = "0.5.2"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd9774d97c281d07a61006775c675940371c170ae1b454de0e9c013e0acd19f6"
+checksum = "bb4bea10ef85ea3d06a20412c67cb612527feb25f33367eab850139441fb5dd9"
 dependencies = [
  "buffa",
  "buffa-descriptor",
@@ -148,11 +151,14 @@ dependencies = [
 
 [[package]]
 name = "buffa-descriptor"
-version = "0.5.2"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7b942f9242ea5a79c92486460073a0a36cccc314e69fbc2ff08f55467c47b37"
+checksum = "2b7dd79a6898e70dac8adae959c8ad2cae51ed96397935c91c996280cedcb55e"
 dependencies = [
  "buffa",
+ "rustversion",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -1066,6 +1072,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a219298ac11a56ea9a6d2120044824d6f01aeb034955e7af7bc16858527deea"
 
 [[package]]
+name = "simdutf8"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
+
+[[package]]
 name = "slab"
 version = "0.4.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1076,6 +1088,15 @@ name = "smallvec"
 version = "1.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ed6a63f02c8539c91a8685a86f4099661ba3da017932f6ebbea6de3f0fa7c90"
+
+[[package]]
+name = "smoothutf8"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b4ec95892483d6d94284caccfddb9b77111a4dcac33ed25d624248def0fa5f1"
+dependencies = [
+ "simdutf8",
+]
 
 [[package]]
 name = "spki"
@@ -1482,8 +1503,8 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-core"
-version = "0.5.0"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
+version = "0.6.0-rc.0"
+source = "git+https://github.com/NVIDIA/yaml-sigil-rs?branch=dev%2F0.6.0#d3b8367b6562b72dcf4acf672397e09fe2d35430"
 dependencies = [
  "base64 0.23.1",
  "buf-tools",
@@ -1498,13 +1519,15 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-signing"
-version = "0.5.0"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
+version = "0.6.0-rc.0"
+source = "git+https://github.com/NVIDIA/yaml-sigil-rs?branch=dev%2F0.6.0#d3b8367b6562b72dcf4acf672397e09fe2d35430"
 dependencies = [
  "base64 0.23.1",
- "buffa",
+ "curve25519-dalek",
  "ed25519-dalek",
  "p256",
+ "sha2 0.10.9",
+ "signature",
  "thiserror",
  "tracing",
  "yaml-sigil-core",
@@ -1523,8 +1546,8 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-transcription"
-version = "0.5.0"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
+version = "0.6.0-rc.0"
+source = "git+https://github.com/NVIDIA/yaml-sigil-rs?branch=dev%2F0.6.0#d3b8367b6562b72dcf4acf672397e09fe2d35430"
 dependencies = [
  "tracing",
  "yaml-sigil-core",
@@ -1533,8 +1556,8 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-verification"
-version = "0.5.0"
-source = "git+https://github.com/canardleteer/yaml-sigil-rs?branch=feat%2Fwasm#3161d5751e4179780c47b60e52b260dcb85faaf9"
+version = "0.6.0-rc.0"
+source = "git+https://github.com/NVIDIA/yaml-sigil-rs?branch=dev%2F0.6.0#d3b8367b6562b72dcf4acf672397e09fe2d35430"
 dependencies = [
  "base64 0.23.1",
  "curve25519-dalek",
@@ -1553,7 +1576,6 @@ name = "yaml-sigil-web"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
- "buffa",
  "console_error_panic_hook",
  "ed25519-dalek",
  "getrandom 0.2.17",

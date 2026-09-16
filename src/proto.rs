@@ -1,7 +1,7 @@
 //! Typed protobuf views for playground forms (`SignedYamlArtifact`, `YamlSigilSignature`).
 
-use buffa::{Enumeration, Message};
-use yaml_sigil_core::pb::{Algorithm, YamlSigilSignature};
+use yaml_sigil_core::AlgorithmId;
+use yaml_sigil_core::pb::YamlSigilSignature;
 use yaml_sigil_core::{
     decode_signature_carrier, decode_signed_yaml_artifact, view_signed_yaml_artifact,
 };
@@ -41,9 +41,9 @@ pub fn parse_carrier_text(input: &str) -> Result<SignatureFields, String> {
     }
     let sig = decode_signature_carrier(&bytes).map_err(|error| error.to_string())?;
     Ok(signature_fields(
-        sig.alg.to_i32(),
-        sig.keyid.as_deref(),
-        &sig.signature,
+        sig.algorithm_wire_value(),
+        sig.keyid(),
+        sig.signature(),
     ))
 }
 
@@ -52,7 +52,7 @@ pub fn encode_carrier_text(
     keyid: &str,
     signature_b64: &str,
 ) -> Result<String, String> {
-    let alg = Algorithm::from_proto_name(alg_name).ok_or("invalid algorithm")?;
+    let alg = algorithm_from_proto_name(alg_name).ok_or("invalid algorithm")?;
     let signature = decode_binary_field(signature_b64)?;
     let keyid = {
         let trimmed = keyid.trim();
@@ -62,24 +62,35 @@ pub fn encode_carrier_text(
             Some(trimmed.to_string())
         }
     };
-    let bytes = YamlSigilSignature {
-        alg: alg.into(),
-        keyid,
-        signature,
-        ..Default::default()
-    }
-    .encode_to_vec();
+    let mut message = YamlSigilSignature::new(alg, signature);
+    message.set_keyid(keyid);
+    let bytes = message.encode_to_vec().map_err(|error| error.to_string())?;
     Ok(encode_payload(&bytes, "protobuf"))
 }
 
 fn signature_fields(alg_wire: i32, keyid: Option<&str>, signature: &[u8]) -> SignatureFields {
-    let alg = Algorithm::from_i32(alg_wire)
-        .map(|alg| alg.proto_name().to_string())
+    let alg = AlgorithmId::from_i32(alg_wire)
+        .map(|alg| algorithm_proto_name(alg).to_string())
         .unwrap_or_else(|| format!("unknown ({alg_wire})"));
     SignatureFields {
         alg,
         keyid: keyid.unwrap_or_default().to_string(),
         signature_b64: encode_payload(signature, "protobuf"),
+    }
+}
+
+fn algorithm_from_proto_name(name: &str) -> Option<AlgorithmId> {
+    match name {
+        "ALGORITHM_ED25519_PUREEDDSA_RAW_RS64_CANONICAL" => Some(AlgorithmId::Ed25519),
+        "ALGORITHM_ECDSA_SECP256R1_SHA256_RAW_RS64" => Some(AlgorithmId::EcdsaP256Sha256),
+        _ => None,
+    }
+}
+
+fn algorithm_proto_name(algorithm: AlgorithmId) -> &'static str {
+    match algorithm {
+        AlgorithmId::Ed25519 => "ALGORITHM_ED25519_PUREEDDSA_RAW_RS64_CANONICAL",
+        AlgorithmId::EcdsaP256Sha256 => "ALGORITHM_ECDSA_SECP256R1_SHA256_RAW_RS64",
     }
 }
 
