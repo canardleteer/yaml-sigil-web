@@ -521,7 +521,7 @@ mod tests {
 
         let bytes = decode_key_bytes(&pair.public_hex).expect("hex");
         let key = resolve_p256_verifying_key(&bytes).expect("uncompressed");
-        let compressed = to_hex(key.to_encoded_point(true).as_bytes());
+        let compressed = to_hex(key.to_sec1_point(true).as_ref());
         let rejected = verify(&signed.primary, "yaml", P256_NAME, &compressed);
         assert_eq!(rejected.status, "invocation_error", "{rejected:?}");
         assert_eq!(rejected.code.as_deref(), Some("key_resolution_failure"));

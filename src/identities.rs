@@ -1,7 +1,6 @@
 //! Session-only named identities for the playground.
 
-use rand::Rng;
-use rand::rngs::OsRng;
+use rand::RngExt;
 use rand::seq::SliceRandom;
 
 use crate::keys::{canonical_public_key, generate_keypair};
@@ -38,7 +37,7 @@ pub struct Roster {
 
 impl Roster {
     pub fn seed() -> Result<Self, String> {
-        Self::seed_with_algs(assign_preset_algs(&mut OsRng))
+        Self::seed_with_algs(assign_preset_algs(&mut rand::rng()))
     }
 
     fn seed_with_algs(algs: [String; 3]) -> Result<Self, String> {
@@ -224,8 +223,8 @@ pub fn normalize_keyid(keyid: &str) -> Result<String, String> {
     Ok(trimmed.to_string())
 }
 
-pub fn assign_preset_algs(rng: &mut impl Rng) -> [String; 3] {
-    let extra = if rng.gen_bool(0.5) {
+pub fn assign_preset_algs(rng: &mut impl RngExt) -> [String; 3] {
+    let extra = if rng.random_bool(0.5) {
         ED25519_NAME
     } else {
         P256_NAME
