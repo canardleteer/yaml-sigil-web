@@ -661,4 +661,55 @@ mod tests {
         let unsigned = decompose(YAML, "yaml", None);
         assert_eq!(unsigned.status, "unsigned", "{unsigned:?}");
     }
+
+    #[test]
+    fn invocation_and_verification_error_paths() {
+        let pair = generate_keypair(ED25519_NAME).expect("keys");
+        let other = generate_keypair(ED25519_NAME).expect("other");
+        let signed = sign(
+            "claim: no-final-newline",
+            ED25519_NAME,
+            &pair.private_hex,
+            Some(""),
+            true,
+            "yaml",
+        );
+        assert_eq!(signed.status, "success", "{signed:?}");
+        assert_eq!(signed.extra_label, "modified payload");
+        assert!(!signed.extra.is_empty());
+
+        let wrong = verify(&signed.primary, "yaml", ED25519_NAME, &other.public_hex);
+        assert_eq!(wrong.status, "signed_but_failed_verification", "{wrong:?}");
+
+        let short_key = sign(YAML, ED25519_NAME, "00", None, true, "yaml");
+        assert_eq!(short_key.status, "invocation_error");
+        assert_eq!(short_key.code.as_deref(), Some("invalid_signing_key"));
+
+        let short_p256 = sign(YAML, P256_NAME, "00", None, true, "yaml");
+        assert_eq!(short_p256.status, "invocation_error");
+        assert_eq!(short_p256.code.as_deref(), Some("invalid_signing_key"));
+
+        let bad_form = sign(YAML, ED25519_NAME, &pair.private_hex, None, true, "JSON");
+        assert_eq!(bad_form.status, "invocation_error");
+        assert_eq!(
+            bad_form.code.as_deref(),
+            Some("invalid_or_unsupported_output_form")
+        );
+
+        let bad_verify_form = verify(&signed.primary, "JSON", ED25519_NAME, &pair.public_hex);
+        assert_eq!(bad_verify_form.status, "invocation_error");
+        let bad_verify_alg = verify(&signed.primary, "yaml", "nope", &pair.public_hex);
+        assert_eq!(bad_verify_alg.status, "invocation_error");
+        let bad_verify_key = verify(&signed.primary, "yaml", ED25519_NAME, "00");
+        assert_eq!(bad_verify_key.status, "invocation_error");
+
+        let bad_transcode = transcode(&signed.primary, "JSON", "yaml");
+        assert_eq!(bad_transcode.status, "invocation_error");
+        let bad_carrier = compose(YAML, "$$$$", "protobuf");
+        assert_eq!(bad_carrier.status, "invocation_error");
+        let bad_outer = decompose(&signed.primary, "protobuf", Some("loose"));
+        assert_eq!(bad_outer.status, "invocation_error");
+        let proto_unsigned = decompose("AAAA", "protobuf", Some("signature_strict"));
+        assert_ne!(proto_unsigned.status, "ok");
+    }
 }

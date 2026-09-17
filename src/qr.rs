@@ -49,6 +49,14 @@ pub fn can_encode(text: &str) -> bool {
     qr_code(text).is_ok()
 }
 
+pub fn yaml_snapshot_ready(current: &str, snapshot: &str) -> bool {
+    !current.is_empty() && current == snapshot
+}
+
+pub fn yaml_qr_ready(current: &str, snapshot: &str) -> bool {
+    yaml_snapshot_ready(current, snapshot) && can_encode(current)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -76,5 +84,16 @@ mod tests {
         let huge = "x".repeat(8_000);
         assert!(encode(&huge).is_err());
         assert!(!can_encode(&huge));
+    }
+
+    #[test]
+    fn yaml_qr_requires_an_unchanged_encodable_snapshot() {
+        let yaml = "claim: ridge-line cache\n";
+        assert!(!yaml_snapshot_ready("", ""));
+        assert!(!yaml_snapshot_ready(yaml, ""));
+        assert!(yaml_snapshot_ready(yaml, yaml));
+        assert!(yaml_qr_ready(yaml, yaml));
+        assert!(!yaml_qr_ready(yaml, "other"));
+        assert!(!yaml_qr_ready("", ""));
     }
 }

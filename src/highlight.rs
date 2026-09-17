@@ -386,4 +386,21 @@ mod tests {
         assert!(painted.contains("&amp;"));
         assert!(!painted.contains("a < b"));
     }
+
+    #[test]
+    fn markers_scalars_and_flow_punctuation() {
+        let yaml = "%YAML 1.2\r\n%TAG !e! tag:example.com,2026:\r\n---\r...\nflag: true\nempty: null\nnada: ~\ncount: -1.5e+2\nlist:\n  - item\nfolded: >-\nblock: |+\nquoted: \"say \\\"hi\\\"\"\nsingle: 'plain'\nanchor: &id value\nalias: *id\ntagged: !custom ok\nuri: !<tag:yaml.org,2002:str> text\nflow: {a: [1, 2]}\nkey-name: ok #\nopen: \"unterminated\n";
+        let painted = html(yaml);
+        assert!(painted.contains("yaml-doc"));
+        assert!(painted.contains("yaml-bool"));
+        assert!(painted.contains("yaml-null"));
+        assert!(painted.contains("yaml-number"));
+        assert!(painted.contains("yaml-punct"));
+        assert!(painted.contains("yaml-anchor"));
+        assert!(painted.contains("yaml-tag"));
+        assert!(painted.contains("yaml-string"));
+        assert!(painted.contains("yaml-comment"));
+        assert!(painted.contains("&quot;"));
+        assert!(painted.contains("&gt;"));
+    }
 }
