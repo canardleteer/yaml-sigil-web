@@ -10,21 +10,21 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Rust toolchain
         run: rustup show
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2.9.1
       - name: cargo xtask ci
         run: cargo xtask ci
 
   coverage:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - name: Rust toolchain
         run: rustup show
-      - uses: Swatinem/rust-cache@v2
-      - uses: taiki-e/install-action@v2
+      - uses: Swatinem/rust-cache@v2.9.1
+      - uses: taiki-e/install-action@v2.87.13
         with:
           tool: cargo-llvm-cov
       - name: cargo xtask coverage
