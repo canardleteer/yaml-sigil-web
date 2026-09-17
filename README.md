@@ -17,6 +17,7 @@ This is a demo, not a key store. Browser WebAssembly does not provide the same s
 - Rust **stable** via `rust-toolchain.toml` (MSRV **1.98.0** in `Cargo.toml`) with `wasm32-unknown-unknown`, `rustfmt`, and `clippy`
 - [Trunk](https://trunkrs.dev/) 0.21.x (`cargo install --locked trunk --version 0.21.14`)
 - Network on the first build: `yaml-sigil-core` runs host `build.rs` (Buf via `buf-tools`, protobuf codegen via `buffa-build`)
+- WASM builds set `getrandom_backend="wasm_js"` via `.cargo/config.toml` (required by `getrandom` 0.3/0.4)
 
 ```bash
 rustup show

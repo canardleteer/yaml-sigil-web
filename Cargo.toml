@@ -31,27 +31,36 @@ unsafe_code = "forbid"
 all = "warn"
 
 [dependencies]
-base64 = "0.22"
+base64 = "0.23"
 console_error_panic_hook = "0.1"
-ed25519-dalek = { version = "2.1", default-features = false, features = [
+ed25519-dalek = { version = "3.0", default-features = false, features = [
     "alloc",
+    "fast",
     "rand_core",
     "zeroize",
 ] }
-getrandom = { version = "0.2", features = ["js"] }
-js-sys = { version = "=0.3.104", default-features = false, features = ["std"] }
-noyalib = { version = "0.0.36", default-features = false, features = ["std"] }
-p256 = { version = "0.13", default-features = false, features = ["ecdsa"] }
+getrandom = { version = "0.3", features = ["wasm_js"] }
+js-sys = { version = "=0.3.105", default-features = false, features = ["std"] }
+noyalib = { version = "0.0.43", default-features = false, features = ["std"] }
+p256 = { version = "0.14", default-features = false, features = ["ecdsa"] }
 plot_icon = { version = "0.3.0", default-features = false, features = ["vec"] }
 qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
-rand = "0.8"
+rand = { version = "0.10", default-features = false, features = [
+    "std",
+    "std_rng",
+    "sys_rng",
+    "thread_rng",
+] }
 serde_json = "1.0"
-wasm-bindgen = "=0.2.127"
+wasm-bindgen = "=0.2.128"
 yaml-sigil-core = { git = "https://github.com/NVIDIA/yaml-sigil-rs", branch = "dev/0.6.0", default-features = false }
 yaml-sigil-signing = { git = "https://github.com/NVIDIA/yaml-sigil-rs", branch = "dev/0.6.0", default-features = false }
 yaml-sigil-transcription = { git = "https://github.com/NVIDIA/yaml-sigil-rs", branch = "dev/0.6.0", default-features = false }
 yaml-sigil-verification = { git = "https://github.com/NVIDIA/yaml-sigil-rs", branch = "dev/0.6.0", default-features = false }
 zeroize = { version = "1.8", default-features = false, features = ["alloc"] }
+
+[target.wasm32-unknown-unknown.dependencies]
+getrandom_04 = { package = "getrandom", version = "0.4", features = ["wasm_js"] }
 
 [dependencies.web-sys]
 version = "0.3"

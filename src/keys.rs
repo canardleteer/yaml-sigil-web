@@ -2,7 +2,7 @@
 
 use ed25519_dalek::SigningKey as Ed25519SigningKey;
 use p256::ecdsa::SigningKey as P256SigningKey;
-use rand::rngs::OsRng;
+use p256::elliptic_curve::Generate;
 use zeroize::Zeroize;
 
 use crate::codec::{decode_key_bytes, to_hex};
@@ -17,7 +17,7 @@ pub struct KeyPairHex {
 pub fn generate_keypair(algorithm: &str) -> Result<KeyPairHex, String> {
     match algorithm {
         ED25519_NAME => {
-            let signing = Ed25519SigningKey::generate(&mut OsRng);
+            let signing = Ed25519SigningKey::generate(&mut rand::rng());
             let mut private = signing.to_bytes();
             let public = signing.verifying_key().to_bytes();
             let pair = KeyPairHex {
@@ -28,12 +28,12 @@ pub fn generate_keypair(algorithm: &str) -> Result<KeyPairHex, String> {
             Ok(pair)
         }
         P256_NAME => {
-            let signing = P256SigningKey::random(&mut OsRng);
+            let signing = P256SigningKey::generate_from_rng(&mut rand::rng());
             let mut private = signing.to_bytes().to_vec();
-            let public = signing.verifying_key().to_encoded_point(false);
+            let public = signing.verifying_key().to_sec1_point(false);
             let pair = KeyPairHex {
                 private_hex: to_hex(&private),
-                public_hex: to_hex(public.as_bytes()),
+                public_hex: to_hex(public.as_ref()),
             };
             private.zeroize();
             Ok(pair)
@@ -55,7 +55,7 @@ pub fn canonical_public_key(algorithm: &str, public_key: &str) -> Result<String,
             let key = resolve_p256_verifying_key(&bytes).map_err(|_| {
                 "public key must be a 65-byte uncompressed SEC1 point (0x04 || X || Y)".to_string()
             })?;
-            Ok(to_hex(key.to_encoded_point(false).as_bytes()))
+            Ok(to_hex(key.to_sec1_point(false).as_ref()))
         }
         _ => Err("unsupported algorithm".into()),
     }
@@ -101,7 +101,7 @@ mod tests {
         let pair = generate_keypair(P256_NAME).expect("p256");
         let bytes = decode_key_bytes(&pair.public_hex).expect("hex");
         let key = resolve_p256_verifying_key(&bytes).expect("uncompressed");
-        let compressed = to_hex(key.to_encoded_point(true).as_bytes());
+        let compressed = to_hex(key.to_sec1_point(true).as_ref());
         assert_eq!(compressed.len(), 66);
         let err = canonical_public_key(P256_NAME, &compressed).expect_err("compressed");
         assert!(err.contains("uncompressed"), "{err}");
