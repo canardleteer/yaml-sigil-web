@@ -11,6 +11,7 @@ use web_sys::{
     HtmlTextAreaElement, KeyboardEvent, Url,
 };
 
+use crate::forms;
 use crate::highlight;
 use crate::identicon;
 use crate::identities::{Roster, short_alg, trunc_hex};
@@ -1265,7 +1266,7 @@ fn schedule_verify(document: &Document) {
 fn refresh_verify_convert(document: &Document) {
     let artifact = textarea_value(document, "verify-artifact");
     let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
-    let other = other_form(&form);
+    let other = forms::other_form(&form);
     let show = !artifact.trim().is_empty()
         && !signed_envelope_in_form(&artifact, &form)
         && signed_envelope_in_form(&artifact, other);
@@ -1275,7 +1276,7 @@ fn refresh_verify_convert(document: &Document) {
 fn convert_verify_artifact(document: &Document) {
     let artifact = textarea_value(document, "verify-artifact");
     let form = select_value(document, "verify-form").unwrap_or_else(|| "yaml".into());
-    let transcoded = ops::transcode(&artifact, other_form(&form), &form);
+    let transcoded = ops::transcode(&artifact, forms::other_form(&form), &form);
     if transcoded.status != "success" {
         show_result(document, "verify-status", &transcoded);
         refresh_verify_convert(document);
@@ -1766,15 +1767,7 @@ fn apply_compose_transcode(document: &Document, next: &str, transcoded: &OpResul
 }
 
 fn signed_envelope_in_form(artifact: &str, form: &str) -> bool {
-    ops::transcode(artifact, form, other_form(form)).status == "success"
-}
-
-fn other_form(form: &str) -> &'static str {
-    if form == "protobuf" {
-        "yaml"
-    } else {
-        "protobuf"
-    }
+    ops::transcode(artifact, form, forms::other_form(form)).status == "success"
 }
 
 fn update_outer_enabled(document: &Document) {
@@ -1836,24 +1829,16 @@ fn remember_compose_yaml(text: &str) {
     LAST_COMPOSE_YAML.with(|cell| *cell.borrow_mut() = text.to_string());
 }
 
-fn yaml_snapshot_ready(current: &str, snapshot: &str) -> bool {
-    !current.is_empty() && current == snapshot
-}
-
-fn yaml_qr_ready(current: &str, snapshot: &str) -> bool {
-    yaml_snapshot_ready(current, snapshot) && qr::can_encode(current)
-}
-
 fn validate_yaml_ready(document: &Document) -> bool {
     let current = textarea_value(document, "validate-yaml");
     let snapshot = LAST_VALIDATE_YAML.with(|cell| cell.borrow().clone());
-    yaml_snapshot_ready(&current, &snapshot)
+    qr::yaml_snapshot_ready(&current, &snapshot)
 }
 
 fn validate_qr_payload(document: &Document) -> Option<String> {
     let current = textarea_value(document, "validate-yaml");
     let snapshot = LAST_VALIDATE_YAML.with(|cell| cell.borrow().clone());
-    yaml_qr_ready(&current, &snapshot).then_some(current)
+    qr::yaml_qr_ready(&current, &snapshot).then_some(current)
 }
 
 fn sign_qr_payload(document: &Document) -> Option<String> {
@@ -1863,7 +1848,7 @@ fn sign_qr_payload(document: &Document) -> Option<String> {
     }
     let current = textarea_value(document, "sign-artifact");
     let snapshot = LAST_SIGN_YAML.with(|cell| cell.borrow().clone());
-    yaml_qr_ready(&current, &snapshot).then_some(current)
+    qr::yaml_qr_ready(&current, &snapshot).then_some(current)
 }
 
 fn compose_qr_payload(document: &Document) -> Option<String> {
@@ -1873,7 +1858,7 @@ fn compose_qr_payload(document: &Document) -> Option<String> {
     }
     let current = textarea_value(document, "compose-artifact");
     let snapshot = LAST_COMPOSE_YAML.with(|cell| cell.borrow().clone());
-    yaml_qr_ready(&current, &snapshot).then_some(current)
+    qr::yaml_qr_ready(&current, &snapshot).then_some(current)
 }
 
 fn live_qr_payload(document: &Document, id: &str) -> Option<String> {

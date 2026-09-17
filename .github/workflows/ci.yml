@@ -14,11 +14,18 @@ jobs:
       - name: Rust toolchain
         run: rustup show
       - uses: Swatinem/rust-cache@v2
-      - name: cargo fmt
-        run: cargo fmt --all -- --check
-      - name: cargo clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: cargo test
-        run: cargo test
-      - name: wasm32 check
-        run: cargo clippy --target wasm32-unknown-unknown -- -D warnings
+      - name: cargo xtask ci
+        run: cargo xtask ci
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Rust toolchain
+        run: rustup show
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+      - name: cargo xtask coverage
+        run: cargo xtask coverage

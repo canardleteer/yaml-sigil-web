@@ -1,5 +1,6 @@
 mod app;
 mod codec;
+mod forms;
 mod highlight;
 mod identicon;
 mod identities;

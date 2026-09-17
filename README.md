@@ -26,15 +26,17 @@ cargo install --locked trunk --version 0.21.14
 ## Checks
 
 ```bash
-cargo fmt
-cargo clippy --all-targets --all-features -- -D warnings
-cargo test
+cargo xtask check
 ```
+
+`cargo xtask ci` is the same command. Host coverage of the library (excluding
+the DOM shell in `src/app.rs` and the wasm-bindgen entry in `src/lib.rs`) is
+`cargo xtask coverage` and fails under 90% lines.
 
 ## Serve (live reload)
 
 ```bash
-trunk serve
+cargo xtask serve
 ```
 
 `Trunk.toml` binds `0.0.0.0:8080` on the host. `open = false` means Trunk will not auto-open a browser tab; it does not restrict private IPs.
@@ -46,6 +48,7 @@ Open [http://127.0.0.1:8080/](http://127.0.0.1:8080/) or `http://<host-lan-ip>:8
 The image is official **Rust 1.x on Debian Trixie** (`rust:1-trixie`), so a fresh pull tracks current stable. Override the base with `RUST_IMAGE`. The container listens on **8393** by default; set `PORT` to change both the listen port and the published host port.
 
 ```bash
+cargo xtask image
 docker compose up --build
 # http://127.0.0.1:8393/
 
@@ -60,7 +63,7 @@ The Dockerfile has a `build` stage (`trunk build --release`) and a `runtime` sta
 ## Static site
 
 ```bash
-trunk build --release
+cargo xtask build
 ```
 
 Output is `dist/`. `public_url` is `./` so hashed assets work locally and on GitHub project pages.
@@ -69,7 +72,7 @@ The first uncached build clones `yaml-sigil-rs` and may download Buf. Later buil
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` builds with Trunk and uploads `dist/`. Enable GitHub Pages (Actions source) on the repository to publish.
+`.github/workflows/pages.yml` runs `cargo xtask build` and uploads `dist/`. Enable GitHub Pages (Actions source) on the repository to publish.
 
 ## Selectors
 
