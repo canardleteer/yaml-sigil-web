@@ -8,7 +8,7 @@
 
 In-browser YamlSigil v1alpha1 demo: **Sign**, **Verify**, **Compose**, **Decompose**, plus YAML parse checks.
 
-It depends on [`NVIDIA/yaml-sigil-rs` `dev/0.6.0`](https://github.com/NVIDIA/yaml-sigil-rs/tree/dev/0.6.0). Keys are minted in the page session and are not stored.
+It depends on [`NVIDIA/yaml-sigil-rs` `main`](https://github.com/NVIDIA/yaml-sigil-rs/tree/main) (tracking `main` until crates.io release; currently pinned to commit `be0103f`). Keys are minted in the page session and are not stored.
 
 This is a demo, not a key store. Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment.
 
