@@ -6,11 +6,11 @@
 
 ## About
 
-In-browser YamlSigil v1alpha1 demo: **Sign**, **Verify**, **Compose**, **Decompose**, plus YAML parse checks.
+In-browser YamlSigil v1alpha1 demo: sign, verify, compose, decompose, plus YAML parse checks.
 
-It depends on [`NVIDIA/yaml-sigil-rs` `main`](https://github.com/NVIDIA/yaml-sigil-rs/tree/main) (tracking `main` until crates.io release; currently pinned to commit `be0103f`). Keys are minted in the page session and are not stored.
+It depends on [`yaml-sigil-wasm` 0.6.0-rc.1](https://crates.io/crates/yaml-sigil-wasm) from crates.io. Keys are minted in the page session and are not stored.
 
-This is a demo, not a key store. Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment.
+Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment; do not use this playground as a key store.
 
 ## Requirements
 
@@ -69,7 +69,7 @@ cargo xtask build
 
 Output is `dist/`. `public_url` is `./` so hashed assets work locally and on GitHub project pages.
 
-The first uncached build clones `yaml-sigil-rs` and may download Buf. Later builds reuse Cargo’s git and registry caches.
+The first uncached build fetches dependencies from crates.io and may download Buf. Later builds reuse Cargo’s registry caches.
 
 ## GitHub Pages
 
@@ -77,13 +77,13 @@ The first uncached build clones `yaml-sigil-rs` and may download Buf. Later buil
 
 ## Selectors
 
-Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as **protobuf (base64)**. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`. Changing **Form** on Compose or Decompose transcodes a signed artifact between yaml and protobuf when the bytes are not already in the selected form. Verify shows **Convert** when the artifact is a signed envelope in the other form. Validate, Sign, and Compose offer a YAML QR code when the document is valid yaml and unmodified; protobuf keeps those buttons disabled. Verify offers a QR code of the artifact box and of the authenticated payload box; the payload button stays disabled while that box is empty. YAML boxes are syntax-highlighted, including multi-document streams; protobuf stays plain.
+Form values are exactly `yaml` and `protobuf` (case-sensitive). The UI labels protobuf as `protobuf (base64)`. YAML decompose omits outer conformance. Protobuf decompose requires `strict` or `signature_strict`. Changing the Form selector on Compose or Decompose transcodes a signed artifact between yaml and protobuf when the bytes are not already in the selected form. Verify shows a Convert button when the artifact is a signed envelope in the other form. A YAML QR code can be generated for YAML payloads and artifacts when the active document is valid yaml without unsaved edits, whereas protobuf keeps those actions disabled. Verify offers a QR code of the artifact box and of the authenticated payload box; the payload button stays disabled while that box is empty. YAML boxes are syntax-highlighted, including multi-document streams; protobuf stays plain.
 
 Algorithms:
 
 - `ED25519_PUREEDDSA_RAW_RS64_CANONICAL` — 32-byte seed / 32-byte public key
 - `ECDSA_SECP256R1_SHA256_RAW_RS64` — 32-byte scalar / 65-byte uncompressed SEC1 public point (`0x04 || X || Y`)
 
-Keys may be hex (`0x` optional) or base64. Each identity has an optional `keyid` hint (1 to 1024 bytes, no CR/LF); alice, bob, and carol start with their names. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
+Keys may be hex (`0x` optional) or base64. Each identity has an optional `keyid` hint (1 to 1024 bytes, no CR/LF); default roster entries (alice, bob, carol) start with their names. The unsigned payload is always YAML text. Protobuf artifacts and protobuf signature carriers are standard base64. Compose shows them as typed `SignedYamlArtifact` / `YamlSigilSignature` fields; Decompose keeps the artifact as base64 and shows the carrier as typed fields.
 
 Protobuf wire encoding uses the `yaml-sigil-core` facade (Buffa stays private to that crate, including `wasm32-unknown-unknown`).

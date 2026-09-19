@@ -1653,8 +1653,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-core"
-version = "0.6.0-rc.0"
-source = "git+https://github.com/NVIDIA/yaml-sigil-rs?rev=be0103f6081f75e0833532d0eeccfa38c7bd8477#be0103f6081f75e0833532d0eeccfa38c7bd8477"
+version = "0.6.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1262963eb50317e7878deba9cef093c4a84702d2e7cc80e9612da26ef1d21386"
 dependencies = [
  "base64",
  "buf-tools",
@@ -1669,8 +1670,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-signing"
-version = "0.6.0-rc.0"
-source = "git+https://github.com/NVIDIA/yaml-sigil-rs?rev=be0103f6081f75e0833532d0eeccfa38c7bd8477#be0103f6081f75e0833532d0eeccfa38c7bd8477"
+version = "0.6.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e1abb4c7636d7f454eea9c6f2cc10b270dafd1d2bc9fc7396e3673a7b4bb825"
 dependencies = [
  "base64",
  "curve25519-dalek",
@@ -1696,8 +1698,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-transcription"
-version = "0.6.0-rc.0"
-source = "git+https://github.com/NVIDIA/yaml-sigil-rs?rev=be0103f6081f75e0833532d0eeccfa38c7bd8477#be0103f6081f75e0833532d0eeccfa38c7bd8477"
+version = "0.6.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "726b612c455e6d63d293cc1d697cdf333c6b4e30b67f395bdc2bd06021e91f9d"
 dependencies = [
  "tracing",
  "yaml-sigil-core",
@@ -1706,8 +1709,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-verification"
-version = "0.6.0-rc.0"
-source = "git+https://github.com/NVIDIA/yaml-sigil-rs?rev=be0103f6081f75e0833532d0eeccfa38c7bd8477#be0103f6081f75e0833532d0eeccfa38c7bd8477"
+version = "0.6.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8383638117a6e3bdf2f99a05b5f752c8e3bfdc390dcf2d4aad7105f21a9cfbfc"
 dependencies = [
  "base64",
  "curve25519-dalek",
@@ -1719,6 +1723,23 @@ dependencies = [
  "yaml-sigil-core",
  "yaml-sigil-traits",
  "yaml-sigil-transcription",
+]
+
+[[package]]
+name = "yaml-sigil-wasm"
+version = "0.6.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "04cc9b16367c2ce910492ef371205451fe9898b2501093232d8c23865e612809"
+dependencies = [
+ "ed25519-dalek",
+ "js-sys",
+ "p256",
+ "wasm-bindgen",
+ "yaml-sigil-core",
+ "yaml-sigil-signing",
+ "yaml-sigil-transcription",
+ "yaml-sigil-verification",
+ "zeroize",
 ]
 
 [[package]]
@@ -1743,6 +1764,7 @@ dependencies = [
  "yaml-sigil-signing",
  "yaml-sigil-transcription",
  "yaml-sigil-verification",
+ "yaml-sigil-wasm",
  "zeroize",
 ]
 

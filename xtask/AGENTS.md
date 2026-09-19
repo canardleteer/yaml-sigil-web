@@ -72,5 +72,5 @@ cargo test --workspace --all-features
 cargo xtask check --only fmt,check
 ```
 
-The image, coverage, serve, and build commands depend on selected local tools
+Tool-dependent commands (image, coverage, serve, build) rely on specific local binaries
 and should be exercised when their implementations change.
