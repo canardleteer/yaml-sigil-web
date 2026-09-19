@@ -17,7 +17,7 @@
 - Prefer `cargo xtask` over new Python scripts for typed, cross-platform,
   Cargo-aware development orchestration. Inspect overlapping Python scripts and
   propose a migration, but obtain user approval before replacing a mature
-  script or changing callers. Retain Python where its ecosystem or
+  script or changing callers. Retain Python where specialized libraries or
   data-processing strengths materially fit better. This repository has no
   retained Python orchestration. When an xtask command needs async I/O or
   concurrency, `tokio` and `tracing` are appropriate. Leave synchronous
