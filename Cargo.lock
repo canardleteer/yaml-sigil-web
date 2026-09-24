@@ -133,9 +133,9 @@ dependencies = [
 
 [[package]]
 name = "buf-tools"
-version = "1.73.0-rc.3"
+version = "1.73.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c20bffc07f2b2d1e2ca84dc3f8a106815c546d1a87d292086e48226dc89ac39a"
+checksum = "135e39cf3482e1d76dcdaa3590b2bc8740d78573cd67bed862f091ca68b77235"
 dependencies = [
  "flate2",
  "hex",
@@ -793,6 +793,21 @@ name = "noyalib"
 version = "0.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55f03682003f288e23f94d8f6222de0dcf15c77329b5e42b2f37421243c1d373"
+dependencies = [
+ "hashbrown 0.17.1",
+ "indexmap",
+ "libm",
+ "memchr",
+ "rustc-hash",
+ "serde_core",
+ "smallvec",
+]
+
+[[package]]
+name = "noyalib"
+version = "0.0.46"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "790b8ba1d9deeefaf08b90d867f9440b258675c724494a2e82dd356c7f49a88a"
 dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
@@ -1653,15 +1668,16 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-core"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1262963eb50317e7878deba9cef093c4a84702d2e7cc80e9612da26ef1d21386"
+checksum = "0660034d8cdab8c9e43f46a40e0880d2c04538f761b11a381153e2c4e388ca2d"
 dependencies = [
  "base64",
  "buf-tools",
  "buffa",
  "buffa-build",
- "noyalib",
+ "noyalib 0.0.46",
+ "p256",
  "serde",
  "thiserror",
  "tracing",
@@ -1670,13 +1686,15 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-signing"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e1abb4c7636d7f454eea9c6f2cc10b270dafd1d2bc9fc7396e3673a7b4bb825"
+checksum = "aca6b18586838f9ca4da5ece010ebf591c7778c3ee58b4cc8f54b72f37f8fd4c"
 dependencies = [
  "base64",
  "curve25519-dalek",
+ "ecdsa",
  "ed25519-dalek",
+ "getrandom 0.4.3",
  "p256",
  "sha2",
  "signature",
@@ -1685,22 +1703,23 @@ dependencies = [
  "yaml-sigil-core",
  "yaml-sigil-traits",
  "yaml-sigil-transcription",
+ "zeroize",
 ]
 
 [[package]]
 name = "yaml-sigil-traits"
-version = "0.4.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd46b08fb5550e45e5e5e0d94cdb6250f8a820c50a5a8b8c8117484c809b66a2"
+checksum = "49d786139388002a4b662a4a47290d380740f32ca890cca8bf80046494376fc6"
 dependencies = [
  "thiserror",
 ]
 
 [[package]]
 name = "yaml-sigil-transcription"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "726b612c455e6d63d293cc1d697cdf333c6b4e30b67f395bdc2bd06021e91f9d"
+checksum = "9c9d2ff6f252baf399f6ef8594d2e0029b5ca487a11bf81dbed0b0ca8856b598"
 dependencies = [
  "tracing",
  "yaml-sigil-core",
@@ -1709,9 +1728,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-verification"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8383638117a6e3bdf2f99a05b5f752c8e3bfdc390dcf2d4aad7105f21a9cfbfc"
+checksum = "8de306b9570dfa8edee857e4ddae30c0440be6f68b4f85f4c9f6d56695ff7626"
 dependencies = [
  "base64",
  "curve25519-dalek",
@@ -1727,9 +1746,9 @@ dependencies = [
 
 [[package]]
 name = "yaml-sigil-wasm"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04cc9b16367c2ce910492ef371205451fe9898b2501093232d8c23865e612809"
+checksum = "bff053b54e18f6211979b1f6c42b171507c4bb676ef29f793acf427a65df3275"
 dependencies = [
  "ed25519-dalek",
  "js-sys",
@@ -1752,7 +1771,7 @@ dependencies = [
  "getrandom 0.3.4",
  "getrandom 0.4.3",
  "js-sys",
- "noyalib",
+ "noyalib 0.0.43",
  "p256",
  "plot_icon",
  "qrcode",
