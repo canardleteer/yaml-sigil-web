@@ -8,7 +8,7 @@
 
 In-browser YamlSigil v1alpha1 demo: sign, verify, compose, decompose, plus YAML parse checks.
 
-It depends on [`yaml-sigil-wasm` 0.6.0](https://crates.io/crates/yaml-sigil-wasm/0.6.0) from crates.io, along with the matching `yaml-sigil-core`, `yaml-sigil-signing`, `yaml-sigil-transcription`, and `yaml-sigil-verification` crates. Keys are minted in the page session and are not stored.
+It depends on the crates.io 0.6.0 releases of `yaml-sigil-core`, `yaml-sigil-signing`, `yaml-sigil-transcription`, and `yaml-sigil-verification`. Keys are minted in the page session and are not stored.
 
 Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment; do not use this playground as a key store.
 
@@ -17,7 +17,7 @@ Browser WebAssembly does not provide the same side-channel guarantees as a harde
 - Rust **stable** via `rust-toolchain.toml` (MSRV **1.98.0** in `Cargo.toml`) with `wasm32-unknown-unknown`, `rustfmt`, and `clippy`
 - [Trunk](https://trunkrs.dev/) 0.21.x (`cargo install --locked trunk --version 0.21.14`)
 - Network on the first build: `yaml-sigil-core` runs host `build.rs` (Buf via `buf-tools`, protobuf codegen via `buffa-build`)
-- WASM builds set `getrandom_backend="wasm_js"` via `.cargo/config.toml` (required by `getrandom` 0.3/0.4)
+- WASM builds set `getrandom_backend="wasm_js"` via `.cargo/config.toml` (required by `getrandom` 0.4)
 
 ```bash
 rustup show
