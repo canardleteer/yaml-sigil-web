@@ -8,7 +8,7 @@
 
 In-browser YamlSigil v1alpha1 demo: sign, verify, compose, decompose, plus YAML parse checks.
 
-It depends on [`yaml-sigil-wasm` 0.6.0-rc.1](https://crates.io/crates/yaml-sigil-wasm) from crates.io. Keys are minted in the page session and are not stored.
+It depends on [`yaml-sigil-wasm` 0.6.0](https://crates.io/crates/yaml-sigil-wasm/0.6.0) from crates.io, along with the matching `yaml-sigil-core`, `yaml-sigil-signing`, `yaml-sigil-transcription`, and `yaml-sigil-verification` crates. Keys are minted in the page session and are not stored.
 
 Browser WebAssembly does not provide the same side-channel guarantees as a hardened native cryptographic environment; do not use this playground as a key store.
 
