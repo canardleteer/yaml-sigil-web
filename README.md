@@ -15,13 +15,13 @@ Browser WebAssembly does not provide the same side-channel guarantees as a harde
 ## Requirements
 
 - Rust **stable** via `rust-toolchain.toml` (MSRV **1.98.0** in `Cargo.toml`) with `wasm32-unknown-unknown`, `rustfmt`, and `clippy`
-- [Trunk](https://trunkrs.dev/) 0.21.x (`cargo install --locked trunk --version 0.21.14`)
+- [Trunk](https://trunk-rs.github.io/trunk/) 0.22.x (`cargo install --locked trunk --version 0.22.2`)
 - Network on the first build: `yaml-sigil-core` runs host `build.rs` (Buf via `buf-tools`, protobuf codegen via `buffa-build`)
 - WASM builds set `getrandom_backend="wasm_js"` via `.cargo/config.toml` (required by `getrandom` 0.4)
 
 ```bash
 rustup show
-cargo install --locked trunk --version 0.21.14
+cargo install --locked trunk --version 0.22.2
 ```
 
 ## Checks

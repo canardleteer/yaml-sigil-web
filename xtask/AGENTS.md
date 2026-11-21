@@ -42,7 +42,7 @@ not an absent one. Recommend these exact Cargo installs when applicable:
 ```text
 cargo install --locked cargo-llvm-cov
 cargo install --locked cargo-tarpaulin
-cargo install --locked trunk --version 0.21.14
+cargo install --locked trunk --version 0.22.2
 ```
 
 Use `rustup component add rustfmt` or `rustup component add clippy` for missing

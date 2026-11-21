@@ -7,7 +7,7 @@ use anyhow::Result;
 
 use crate::process::{CommandSpec, require, run as run_command};
 
-const TRUNK_INSTALL: &str = "Install it with `cargo install --locked trunk --version 0.21.14`.";
+const TRUNK_INSTALL: &str = "Install it with `cargo install --locked trunk --version 0.22.2`.";
 
 pub fn serve(root: &Path, release: bool, extra: &[OsString]) -> Result<()> {
     require_trunk(root)?;
