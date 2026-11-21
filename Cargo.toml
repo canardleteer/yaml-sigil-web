@@ -43,7 +43,7 @@ js-sys = { version = "=0.3.107", default-features = false, features = ["std"] }
 noyalib = { version = "0.0.63", default-features = false, features = ["std"] }
 p256 = { version = "0.14", default-features = false, features = ["ecdsa"] }
 plot_icon = { version = "0.3.0", default-features = false, features = ["vec"] }
-qrcode = { version = "0.14.1", default-features = false, features = ["svg"] }
+qrcode = { version = "0.15.0", default-features = false, features = ["svg"] }
 rand = { version = "0.10", default-features = false, features = [
     "std",
     "std_rng",
