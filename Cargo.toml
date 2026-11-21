@@ -39,7 +39,7 @@ ed25519-dalek = { version = "3.0", default-features = false, features = [
     "rand_core",
     "zeroize",
 ] }
-js-sys = { version = "=0.3.105", default-features = false, features = ["std"] }
+js-sys = { version = "=0.3.107", default-features = false, features = ["std"] }
 noyalib = { version = "0.0.43", default-features = false, features = ["std"] }
 p256 = { version = "0.14", default-features = false, features = ["ecdsa"] }
 plot_icon = { version = "0.3.0", default-features = false, features = ["vec"] }
@@ -51,11 +51,11 @@ rand = { version = "0.10", default-features = false, features = [
     "thread_rng",
 ] }
 serde_json = "1.0"
-wasm-bindgen = "=0.2.128"
-yaml-sigil-core = { version = "0.6.0", default-features = false }
-yaml-sigil-signing = { version = "0.6.0", default-features = false }
-yaml-sigil-transcription = { version = "0.6.0", default-features = false }
-yaml-sigil-verification = { version = "0.6.0", default-features = false }
+wasm-bindgen = "=0.2.130"
+yaml-sigil-core = { version = "0.6.3-rc.1", default-features = false }
+yaml-sigil-signing = { version = "0.6.3-rc.1", default-features = false }
+yaml-sigil-transcription = { version = "0.6.3-rc.1", default-features = false }
+yaml-sigil-verification = { version = "0.6.3-rc.1", default-features = false }
 zeroize = { version = "1.8", default-features = false, features = ["alloc"] }
 
 [target.wasm32-unknown-unknown.dependencies]
