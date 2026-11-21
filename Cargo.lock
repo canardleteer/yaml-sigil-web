@@ -776,9 +776,9 @@ checksum = "72ef4a56884ca558e5ddb05a1d1e7e1bfd9a68d9ed024c21704cc98872dae1bb"
 
 [[package]]
 name = "noyalib"
-version = "0.0.43"
+version = "0.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55f03682003f288e23f94d8f6222de0dcf15c77329b5e42b2f37421243c1d373"
+checksum = "70b8960f9f4668b69cae4ca71106c84d38ca1ea9f41a9acc20ce55473b967849"
 dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
@@ -791,13 +791,12 @@ dependencies = [
 
 [[package]]
 name = "noyalib"
-version = "0.0.57"
+version = "0.0.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "70b8960f9f4668b69cae4ca71106c84d38ca1ea9f41a9acc20ce55473b967849"
+checksum = "f132f5ea38d74a519b65995b2f7dc7714a8b34df53952eb744107af7c1645a87"
 dependencies = [
  "hashbrown 0.17.1",
  "indexmap",
- "libm",
  "memchr",
  "rustc-hash",
  "serde_core",
@@ -1717,7 +1716,7 @@ dependencies = [
  "ed25519-dalek",
  "getrandom 0.4.3",
  "js-sys",
- "noyalib 0.0.43",
+ "noyalib 0.0.63",
  "p256",
  "plot_icon",
  "qrcode",
